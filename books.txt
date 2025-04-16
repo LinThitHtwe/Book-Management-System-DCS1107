@@ -1,0 +1,4 @@
+1	lin	thit	10	20
+3	jhun	kit	19	2000
+3	lin thit	htwe	10	1000
+1	ada	a	10	200
