@@ -56,10 +56,15 @@ main()
             }
         } while (choice != 0 && choice != 1 && choice != 2 && choice != 3);
 
-        while (isLogin)
+        if (isLogin)
         {
             system("cls");
             DisplayLoginSuccessfulBanner();
+        }
+
+        while (isLogin)
+        {
+
             DisplayAdminMenu();
             do
             {
@@ -106,7 +111,8 @@ main()
                 } while (choice != 0 && choice != 1 && choice != 2);
                 system("cls");
             }
-
+			
+			// logout
             else if (choice == 3)
             {
                 isLogin = false;
