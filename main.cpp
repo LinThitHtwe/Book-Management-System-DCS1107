@@ -17,51 +17,102 @@ struct Book
 void displayWelcomeBanner();
 void displayOptionsMenu();
 void DisplayLoginSuccessfulBanner();
+void DisplayBackToMenuBanner();
+void DisplayProgramQuitBanner();
 void DisplayAdminMenu();
 void AddBook();
 void DisplayBooks();
+void DisplayLogoutSuccessfulBanner();
+int getLatestBookID();
 
 main()
 {
     int choice;
-
+    bool isLogin = false, shouldQuitProgram = false;
     displayWelcomeBanner();
-    displayOptionsMenu();
-    do
-    {
-        cout << "Please enter your choice (0, 1, or 2): ";
-        cin >> choice;
-
-        if (choice != 0 && choice != 1 && choice != 2)
-        {
-            cout << "Invalid choice. Please try again." << endl;
-        }
-    } while (choice != 0 && choice != 1 && choice != 2);
-
-    DisplayLoginSuccessfulBanner();
-    while (true)
+    while (!shouldQuitProgram)
     {
 
-        DisplayAdminMenu();
+        displayOptionsMenu();
         do
         {
-            cout << "Please enter your choice (0, 1, or 2): ";
+            cout << "Please enter your choice (0, 1, 2 or 3): ";
             cin >> choice;
 
-            if (choice != 0 && choice != 1 && choice != 2)
+            if (choice != 0 && choice != 1 && choice != 2 && choice != 3)
             {
                 cout << "Invalid choice. Please try again." << endl;
             }
-        } while (choice != 0 && choice != 1 && choice != 2);
-        cout << endl;
-        system("cls");
-        if (choice == 0)
+            else if (choice == 3)
+            {
+                shouldQuitProgram = true;
+                system("cls");
+                DisplayProgramQuitBanner();
+                break;
+            }
+            else
+            {
+                isLogin = true;
+            }
+        } while (choice != 0 && choice != 1 && choice != 2 && choice != 3);
+
+        while (isLogin)
         {
-            DisplayBooks();
-        }
-        else if (choice == 1)
-        {
-            AddBook();
+            system("cls");
+            DisplayLoginSuccessfulBanner();
+            DisplayAdminMenu();
+            do
+            {
+                cout << "Please enter your choice (0, 1, 2 or 3): ";
+                cin >> choice;
+
+                if (choice != 0 && choice != 1 && choice != 2 && choice != 3)
+                {
+                    cout << "Invalid choice. Please try again." << endl;
+                }
+            } while (choice != 0 && choice != 1 && choice != 2 && choice != 3);
+            cout << endl;
+            system("cls");
+
+            // Display Book
+            if (choice == 0)
+            {
+                DisplayBooks();
+                DisplayBackToMenuBanner();
+                do
+                {
+                    cin >> choice;
+
+                    if (choice != 0 && choice != 1 && choice != 2)
+                    {
+                        cout << "Invalid choice. Please try again." << endl;
+                    }
+                } while (choice != 0 && choice != 1 && choice != 2);
+                system("cls");
+            }
+            // Add Book
+            else if (choice == 1)
+            {
+                AddBook();
+                DisplayBackToMenuBanner();
+                do
+                {
+                    cin >> choice;
+
+                    if (choice != 0 && choice != 1 && choice != 2)
+                    {
+                        cout << "Invalid choice. Please try again." << endl;
+                    }
+                } while (choice != 0 && choice != 1 && choice != 2);
+                system("cls");
+            }
+
+            else if (choice == 3)
+            {
+                isLogin = false;
+                DisplayLogoutSuccessfulBanner();
+                break;
+            }
         }
     }
 }
@@ -93,6 +144,34 @@ void DisplayLoginSuccessfulBanner()
     cout << "======================================================================" << endl;
 }
 
+void DisplayLogoutSuccessfulBanner()
+{
+    cout << "======================================================================" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                   L O G O U T   S U C C E S S F U L              ||" << endl;
+    cout << "||                          W E L C O M E !                         ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "======================================================================" << endl;
+}
+
+void DisplayProgramQuitBanner()
+{
+    cout << "======================================================================" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||               P R O G R A M   S U C C E S S F U L L Y            ||" << endl;
+    cout << "||                           Q U I T !                              ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "======================================================================" << endl;
+}
+
 void displayOptionsMenu()
 {
     cout << "============================= MENU ===================================" << endl;
@@ -101,6 +180,7 @@ void displayOptionsMenu()
     cout << "||  [0] Login                                                       ||" << endl;
     cout << "||  [1] Sign Up                                                     ||" << endl;
     cout << "||  [2] Forget Password                                             ||" << endl;
+    cout << "||  [3] Quit Program                                                ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "======================================================================" << endl;
 }
@@ -113,19 +193,21 @@ void DisplayAdminMenu()
     cout << "||  [0] Book Lists                                                  ||" << endl;
     cout << "||  [1] Add Book                                                    ||" << endl;
     cout << "||  [2] Sales Report                                                ||" << endl;
+    cout << "||  [3] Logout Program                                              ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "======================================================================" << endl;
 }
 
 void DisplayBackToMenuBanner()
 {
+    cout << "\n";
     cout << "=======================================================================" << endl;
     cout << "||                                                                   ||" << endl;
+    cout << "||                Press 0 to go back to the menu                     ||" << endl;
     cout << "||                                                                   ||" << endl;
-    cout << "||  [0] Go Back to Menu                                              ||" << endl;
-    cout << "||                                                                   ||" << endl;
-    cout << "||                                                                   ||" << endl;
-    cout << "=======================================================================" << endl;
+    cout << "======================================================================+" << endl;
+    ;
+    cout << "Enter your choice: ";
 }
 
 void DisplayBooks()
@@ -177,7 +259,6 @@ void DisplayBooks()
 
     cout << "-----------------------------------------------------------------------" << endl
          << endl;
-    ;
 }
 
 void AddBook()
@@ -189,16 +270,17 @@ void AddBook()
 
     cout << "============================= ADD BOOK ===============================" << endl;
 
-    do
-    {
-        cout << "Enter book ID: ";
-        cin >> book.id;
-        if (book.id < 0)
-        {
-            cout << "Invalid input. Please enter a positive integer for book ID." << endl;
-            cin.clear();
-        }
-    } while (book.id < 1);
+    //    do
+    //    {
+    //        cout << "Enter book ID: ";
+    //        cin >> book.id;
+    //        if (book.id < 0)
+    //        {
+    //            cout << "Invalid input. Please enter a positive integer for book ID." << endl;
+    //        }
+    //    } while (book.id < 1);
+
+    book.id = getLatestBookID() + 1;
 
     do
     {
@@ -263,8 +345,22 @@ void AddBook()
 
 int getLatestBookID()
 {
-    ifstream read;
-    read.open("books.txt");
+    ifstream read("books.txt");
+    Book book;
+    int latestId = 1;
 
-    return 1001;
+    while (read >> book.id)
+    {
+        read.ignore();
+        read.getline(book.title, 100);
+        read.getline(book.author, 100);
+        read >> book.quantity;
+        read >> book.price;
+        read.ignore();
+
+        latestId = book.id;
+    }
+
+    read.close();
+    return latestId;
 }
