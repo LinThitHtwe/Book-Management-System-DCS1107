@@ -113,11 +113,23 @@ main()
                 } while (choice != 0 && choice != 1 && choice != 2);
                 system("cls");
             }
-			else if(choice == 2){
-				system("cls");
-				UpdateBookByID();
-			}
-			// logout
+            else if (choice == 2)
+            {
+                system("cls");
+                UpdateBookByID();
+                DisplayBackToMenuBanner();
+                do
+                {
+                    cin >> choice;
+
+                    if (choice != 0 && choice != 1 && choice != 2)
+                    {
+                        cout << "Invalid choice. Please try again." << endl;
+                    }
+                } while (choice != 0 && choice != 1 && choice != 2);
+                system("cls");
+            }
+            // logout
             else if (choice == 3)
             {
                 isLogin = false;
@@ -357,12 +369,12 @@ void AddBook()
 void UpdateBookByID()
 {
     Book books[MAX_BOOKS];
-    int count = 0;
-    int targetId;
+    int count = 0, targetId;
     bool found = false;
-
     ifstream read;
-    
+
+    cout << "============================= UPDATE BOOK ===============================" << endl;
+
     read.open(BOOK_FILE);
 
     if (read.fail())
@@ -371,8 +383,7 @@ void UpdateBookByID()
         return;
     }
 
-
-     while (!read.eof())
+    while (!read.eof())
     {
         read >> books[count].id;
         read.ignore();
@@ -387,7 +398,6 @@ void UpdateBookByID()
     }
     read.close();
 
-
     cout << "Enter the Book ID to update: ";
     cin >> targetId;
 
@@ -396,77 +406,89 @@ void UpdateBookByID()
         if (books[i].id == targetId)
         {
             found = true;
-            cout << "\nCurrent Data:\n";
-            cout << "Title: " << books[i].title << endl;
-            cout << "Author: " << books[i].author << endl;
-            cout << "Quantity: " << books[i].quantity << endl;
-            cout << "Price: " << books[i].price << endl;
+            cout << "\n=========================== CURRENT BOOK INFO ===========================" << endl;
+            cout << left;
+            cout << setw(12) << "ID:" << books[i].id << endl;
+            cout << setw(12) << "Title:" << books[i].title << endl;
+            cout << setw(12) << "Author:" << books[i].author << endl;
+            cout << setw(12) << "Quantity:" << books[i].quantity << endl;
+            cout << setw(12) << "Price:" << books[i].price << endl;
+            cout << "============================================================================" << endl << endl;
 
-            // Update Title
-            do {
-                cout << "\nEnter new title: ";
-                cin.ignore();
-                cin.getline(books[i].title, 100);
-                if (books[i].title[0] == '\0')
-                    cout << "Title cannot be empty.\n";
-            } while (books[i].title[0] == '\0');
-
-            // Update Author
-            do {
-                cout << "Enter new author: ";
-                cin.getline(books[i].author, 100);
-                if (books[i].author[0] == '\0')
-                    cout << "Author cannot be empty.\n";
-            } while (books[i].author[0] == '\0');
-
-            // Update Quantity
-            do {
-                cout << "Enter new quantity: ";
-                cin >> books[i].quantity;
-                if (books[i].quantity < 0)
-                    cout << "Invalid input. Enter non-negative quantity.\n";
-            } while (books[i].quantity < 0);
-
-            // Update Price
-            do {
-                cout << "Enter new price: ";
-                cin >> books[i].price;
-                if (books[i].price < 0)
-                    cout << "Invalid input. Enter non-negative price.\n";
-            } while (books[i].price < 0);
-
-            break;
         }
+        do
+        {
+            cout << "Enter book title to update: ";
+            cin.ignore();
+            cin.getline(books[i].title, 100);
+            if (books[i].title[0] == '\0')
+            {
+                cout << "Title cannot be empty." << endl;
+            }
+        } while (books[i].title[0] == '\0');
+
+        do
+        {
+            cout << "Enter book author to update: ";
+            cin.getline(books[i].author, 100);
+            if (books[i].author[0] == '\0')
+            {
+                cout << "Author name cannot be empty." << endl;
+            }
+        } while (books[i].author[0] == '\0');
+
+        do
+        {
+            cout << "Enter book quantity to update: ";
+            cin >> books[i].quantity;
+            if (books[i].quantity < 1)
+            {
+                cout << "Invalid input. Please enter a non-negative integer for quantity." << endl;
+            }
+        } while (books[i].quantity < 1);
+
+        do
+        {
+            cout << "Enter book price to update: ";
+            cin >> books[i].price;
+            if (books[i].price < 1)
+            {
+                cout << "Invalid input. Please enter a non-negative number for price." << endl;
+            }
+        } while (books[i].price < 1);
+
+        break;
     }
 
-    if (!found)
-    {
-        cout << "Book with ID " << targetId << " not found." << endl;
-        return;
-    }
-	ofstream write;
-	write.open(BOOK_FILE, ios::out);
-    // Overwrite file with updated array
-    //ofstream write(BOOK_FILE);
-    for (int i = 0; i < count; i++)
-    {
-        if (i != 0) write << "\n"; 
-        write << books[i].id << "\n"
-              << books[i].title << "\n"
-              << books[i].author << "\n"
-              << books[i].quantity << "\n"
-              << books[i].price;
-    }
-    write.close();
 
-    cout << "Book updated successfully!" << endl;
+if (!found)
+{
+    cout << "Book with ID " << targetId << " not found." << endl;
+    return;
+}
+ofstream write;
+write.open(BOOK_FILE, ios::out);
+
+for (int i = 0; i < count; i++)
+{
+    if (i != 0)
+        write << "\n";
+    write << books[i].id << "\n"
+          << books[i].title << "\n"
+          << books[i].author << "\n"
+          << books[i].quantity << "\n"
+          << books[i].price;
+}
+write.close();
+
+cout << "Book updated successfully!" << endl;
 }
 
 int getLatestBookID()
 {
     ifstream read("books.txt");
     Book book;
-    int latestId = 1;
+    int latestId = 0;
 
     while (read >> book.id)
     {
