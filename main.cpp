@@ -1,5 +1,7 @@
 #include <iostream>
 #include <fstream>
+#include <iomanip>
+// #include <stdlib.h>
 
 using namespace std;
 
@@ -14,13 +16,15 @@ struct Book
 
 void displayWelcomeBanner();
 void displayOptionsMenu();
+void DisplayLoginSuccessfulBanner();
+void DisplayAdminMenu();
 void AddBook();
-// void DisplayBooks();
+void DisplayBooks();
 
 main()
 {
-
     int choice;
+
     displayWelcomeBanner();
     displayOptionsMenu();
     do
@@ -34,9 +38,32 @@ main()
         }
     } while (choice != 0 && choice != 1 && choice != 2);
 
-    AddBook();
+    DisplayLoginSuccessfulBanner();
+    while (true)
+    {
 
-    // DisplayBooks();
+        DisplayAdminMenu();
+        do
+        {
+            cout << "Please enter your choice (0, 1, or 2): ";
+            cin >> choice;
+
+            if (choice != 0 && choice != 1 && choice != 2)
+            {
+                cout << "Invalid choice. Please try again." << endl;
+            }
+        } while (choice != 0 && choice != 1 && choice != 2);
+        cout << endl;
+        system("cls");
+        if (choice == 0)
+        {
+            DisplayBooks();
+        }
+        else if (choice == 1)
+        {
+            AddBook();
+        }
+    }
 }
 
 void displayWelcomeBanner()
@@ -52,10 +79,22 @@ void displayWelcomeBanner()
     cout << "======================================================================" << endl;
 }
 
+void DisplayLoginSuccessfulBanner()
+{
+    cout << "======================================================================" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                   L O G I N   S U C C E S S F U L                ||" << endl;
+    cout << "||                          W E L C O M E !                         ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "======================================================================" << endl;
+}
+
 void displayOptionsMenu()
 {
-    int choice;
-
     cout << "============================= MENU ===================================" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "||                                                                  ||" << endl;
@@ -66,47 +105,87 @@ void displayOptionsMenu()
     cout << "======================================================================" << endl;
 }
 
-// void DisplayBooks()
-// {
-//     struct Book books[100];
-//     int i = 0, j;
-//     ifstream read;
+void DisplayAdminMenu()
+{
+    cout << "========================== ADMIN MENU ================================" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||  [0] Book Lists                                                  ||" << endl;
+    cout << "||  [1] Add Book                                                    ||" << endl;
+    cout << "||  [2] Sales Report                                                ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "======================================================================" << endl;
+}
 
-//     read.open("books.txt");
+void DisplayBackToMenuBanner()
+{
+    cout << "=======================================================================" << endl;
+    cout << "||                                                                   ||" << endl;
+    cout << "||                                                                   ||" << endl;
+    cout << "||  [0] Go Back to Menu                                              ||" << endl;
+    cout << "||                                                                   ||" << endl;
+    cout << "||                                                                   ||" << endl;
+    cout << "=======================================================================" << endl;
+}
 
-//     while (!read.eof())
-//     {
-//         read >> books[i].id;
-//         read >> books[i].title;
-//         read >> books[i].author;
-//         read >> books[i].quantity;
-//         read >> books[i].price;
+void DisplayBooks()
+{
+    struct Book books[100];
+    int i = 0;
+    ifstream read;
 
-//         i++;
-//     }
+    read.open("books.txt");
 
-//     int size = i;
+    if (read.fail())
+    {
+        cout << "Error opening books file." << endl;
+        return;
+    }
 
-//     cout << "============================= BOOK LIST ===============================" << endl;
-//     cout << "ID\tTitle\t\tAuthor\t\tQuantity\tPrice" << endl;
-//     cout << "----------------------------------------------------------------------" << endl;
+    while (!read.eof())
+    {
+        read >> books[i].id;
+        read.ignore();
+        read.getline(books[i].title, 100);
+        read.getline(books[i].author, 100);
 
-//     for (j = 0; j < 2; j++)
-//     {
-//         cout << books[j].id << "\t"
-//              << books[j].title << "\t"
-//              << books[j].author << "\t"
-//              << books[j].quantity << "\t\t"
-//              << books[j].price << endl;
-//     }
+        read >> books[i].quantity;
+        read >> books[i].price;
+        read.ignore();
 
-//     read.close();
-// }
+        i++;
+    }
+    cout << "============================= BOOK LIST ===============================" << endl;
+    cout
+        << setw(6) << "ID"
+        << setw(25) << "Title"
+        << setw(20) << "Author"
+        << setw(10) << "Qty"
+        << setw(10) << "Price" << endl;
+    cout << "-----------------------------------------------------------------------" << endl;
+
+    for (int j = 0; j < i; j++)
+    {
+        cout
+            << setw(6) << books[j].id
+            << setw(25) << books[j].title
+            << setw(20) << books[j].author
+            << setw(10) << books[j].quantity
+            << fixed << setprecision(2)
+            << setw(10) << books[j].price << endl;
+    }
+
+    cout << "-----------------------------------------------------------------------" << endl
+         << endl;
+    ;
+}
 
 void AddBook()
 {
     ofstream write;
     struct Book book;
+    ifstream read;
+    read.open("books.txt");
 
     cout << "============================= ADD BOOK ===============================" << endl;
 
@@ -164,9 +243,19 @@ void AddBook()
 
     write.open(BOOK_FILE, ios::app);
 
-    write << book.id << "\t" << book.title << "\t"
-          << book.author << "\t" << book.quantity << "\t"
-          << book.price << endl;
+    bool isFileEmpty = read.peek() == EOF;
+
+    if (!isFileEmpty)
+    {
+        write << "\n";
+    }
+
+    write << book.id << "\n"
+          << book.title << "\n"
+          << book.author << "\n"
+          << book.quantity << "\n"
+          << book.price;
+
     write.close();
 
     cout << "Book added successfully!" << endl;
