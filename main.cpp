@@ -1,12 +1,15 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
-// #include <stdlib.h>
+#include <windows.h>
 
 using namespace std;
 
 #define BOOK_FILE "books.txt"
+#define SALE_FILE "sales.txt"
+#define SALE_REPORT_FILE "sales_report.txt"
 #define MAX_BOOKS 100
+#define MAX_SALES 100
 
 struct Book
 {
@@ -15,8 +18,15 @@ struct Book
     double price;
 };
 
-void displayWelcomeBanner();
-void displayOptionsMenu();
+struct Sale
+{
+    char title[100];
+    int id, bookId, totalSold;
+    double totalPrice;
+};
+
+void DisplayWelcomeBanner();
+void DisplayOptionsMenu();
 void DisplayLoginSuccessfulBanner();
 void DisplayBackToMenuBanner();
 void DisplayProgramQuitBanner();
@@ -25,17 +35,21 @@ void AddBook();
 void DisplayBooks();
 void DisplayLogoutSuccessfulBanner();
 void UpdateBookByID();
-int getLatestBookID();
+int GetLatestBookID();
+void DisplaySalesReport();
+void GenerateSalesReport();
+void DisplayBackToMenuBannerSalesReport();
+void DisplayLoading();
 
 main()
 {
     int choice;
     bool isLogin = false, shouldQuitProgram = false;
-    displayWelcomeBanner();
+    DisplayWelcomeBanner();
     while (!shouldQuitProgram)
     {
 
-        displayOptionsMenu();
+        DisplayOptionsMenu();
         do
         {
             cout << "Please enter your choice (0, 1, 2 or 3): ";
@@ -70,14 +84,14 @@ main()
             DisplayAdminMenu();
             do
             {
-                cout << "Please enter your choice (0, 1, 2 or 3): ";
+                cout << "Please enter your choice (0, 1, 2, 3 or 4): ";
                 cin >> choice;
 
-                if (choice != 0 && choice != 1 && choice != 2 && choice != 3)
+                if (choice != 0 && choice != 1 && choice != 2 && choice != 3 && choice != 4)
                 {
                     cout << "Invalid choice. Please try again." << endl;
                 }
-            } while (choice != 0 && choice != 1 && choice != 2 && choice != 3);
+            } while (choice != 0 && choice != 1 && choice != 2 && choice != 3  && choice != 4);
             cout << endl;
             system("cls");
 
@@ -90,11 +104,11 @@ main()
                 {
                     cin >> choice;
 
-                    if (choice != 0 && choice != 1 && choice != 2)
+                    if (choice != 0)
                     {
                         cout << "Invalid choice. Please try again." << endl;
                     }
-                } while (choice != 0 && choice != 1 && choice != 2);
+                } while (choice != 0);
                 system("cls");
             }
             // Add Book
@@ -106,13 +120,14 @@ main()
                 {
                     cin >> choice;
 
-                    if (choice != 0 && choice != 1 && choice != 2)
+                    if (choice != 0)
                     {
                         cout << "Invalid choice. Please try again." << endl;
                     }
-                } while (choice != 0 && choice != 1 && choice != 2);
+                } while (choice != 0);
                 system("cls");
             }
+            // Update Book
             else if (choice == 2)
             {
                 system("cls");
@@ -122,15 +137,49 @@ main()
                 {
                     cin >> choice;
 
-                    if (choice != 0 && choice != 1 && choice != 2)
+                    if (choice != 0)
                     {
                         cout << "Invalid choice. Please try again." << endl;
                     }
-                } while (choice != 0 && choice != 1 && choice != 2);
+                } while (choice != 0);
                 system("cls");
             }
-            // logout
+            // Display Sales Report
             else if (choice == 3)
+            {
+                system("cls");
+                DisplaySalesReport();
+                DisplayBackToMenuBannerSalesReport();
+                do
+                {
+                    cin >> choice;
+
+                    if (choice != 0 && choice != 1)
+                    {
+                        cout << "Invalid choice. Please try again." << endl;
+                    }
+
+                    if (choice == 1)
+                    {
+                        system("cls");
+                        GenerateSalesReport();
+                        DisplayBackToMenuBanner();
+                        do
+                        {
+                            cin >> choice;
+
+                            if (choice != 0)
+                            {
+                                cout << "Invalid choice. Please try again." << endl;
+                            }
+                        } while (choice != 0);
+                    }
+
+                } while (choice != 0 && choice != 1);
+                system("cls");
+            }
+            // Log out
+            else if (choice == 4)
             {
                 isLogin = false;
                 DisplayLogoutSuccessfulBanner();
@@ -140,7 +189,7 @@ main()
     }
 }
 
-void displayWelcomeBanner()
+void DisplayWelcomeBanner()
 {
     cout << "======================================================================" << endl;
     cout << "||                                                                  ||" << endl;
@@ -195,7 +244,7 @@ void DisplayProgramQuitBanner()
     cout << "======================================================================" << endl;
 }
 
-void displayOptionsMenu()
+void DisplayOptionsMenu()
 {
     cout << "============================= MENU ===================================" << endl;
     cout << "||                                                                  ||" << endl;
@@ -215,15 +264,16 @@ void DisplayAdminMenu()
     cout << "||                                                                  ||" << endl;
     cout << "||  [0] Book Lists                                                  ||" << endl;
     cout << "||  [1] Add Book                                                    ||" << endl;
-    cout << "||  [2] Sales Report                                                ||" << endl;
-    cout << "||  [3] Logout Program                                              ||" << endl;
+    cout << "||  [2] Update Book                                                 ||" << endl;
+    cout << "||  [3] Sales Report                                                ||" << endl;
+    cout << "||  [4] Logout Program                                              ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "======================================================================" << endl;
 }
 
 void DisplayBackToMenuBanner()
 {
-    cout << "\n";
+    cout << endl;
     cout << "=======================================================================" << endl;
     cout << "||                                                                   ||" << endl;
     cout << "||                Press 0 to go back to the menu                     ||" << endl;
@@ -233,12 +283,38 @@ void DisplayBackToMenuBanner()
     cout << "Enter your choice: ";
 }
 
+void DisplayBackToMenuBannerSalesReport()
+{
+    cout << "\n";
+    cout << "=======================================================================" << endl;
+    cout << "||                                                                   ||" << endl;
+    cout << "||                Press 0 to go back to the menu                     ||" << endl;
+    cout << "||                Press 1 to generate report                         ||" << endl;
+    cout << "||                                                                   ||" << endl;
+    cout << "======================================================================+" << endl;
+    ;
+    cout << "Enter your choice: ";
+}
+
+void DisplayLoading()
+{
+    cout << endl << endl;
+    cout << setw(50) << "==============================" << endl;
+    cout << setw(50) << "||      L O A D I N G       ||" << endl;
+    cout << setw(50) << "==============================" << endl;
+
+	sleep(1);
+	system("cls");
+}
+
 void DisplayBooks()
 {
     struct Book books[MAX_BOOKS];
     int i = 0;
     ifstream read;
-
+	
+	DisplayLoading();
+	
     read.open(BOOK_FILE);
 
     if (read.fail())
@@ -260,12 +336,13 @@ void DisplayBooks()
 
         i++;
     }
+    
     cout << "============================= BOOK LIST ===============================" << endl;
     cout
         << setw(6) << "ID"
         << setw(25) << "Title"
         << setw(20) << "Author"
-        << setw(10) << "Qty"
+        << setw(10) << "Quantity"
         << setw(10) << "Price" << endl;
     cout << "-----------------------------------------------------------------------" << endl;
 
@@ -284,6 +361,8 @@ void DisplayBooks()
          << endl;
 }
 
+
+
 void AddBook()
 {
     ofstream write;
@@ -293,17 +372,7 @@ void AddBook()
 
     cout << "============================= ADD BOOK ===============================" << endl;
 
-    //    do
-    //    {
-    //        cout << "Enter book ID: ";
-    //        cin >> book.id;
-    //        if (book.id < 0)
-    //        {
-    //            cout << "Invalid input. Please enter a positive integer for book ID." << endl;
-    //        }
-    //    } while (book.id < 1);
-
-    book.id = getLatestBookID() + 1;
+    book.id = GetLatestBookID() + 1;
 
     do
     {
@@ -413,8 +482,8 @@ void UpdateBookByID()
             cout << setw(12) << "Author:" << books[i].author << endl;
             cout << setw(12) << "Quantity:" << books[i].quantity << endl;
             cout << setw(12) << "Price:" << books[i].price << endl;
-            cout << "============================================================================" << endl << endl;
-
+            cout << "============================================================================" << endl
+                 << endl;
         }
         do
         {
@@ -460,33 +529,33 @@ void UpdateBookByID()
         break;
     }
 
+    if (!found)
+    {
+        cout << "Book with ID " << targetId << " not found." << endl;
+        return;
+    }
 
-if (!found)
-{
-    cout << "Book with ID " << targetId << " not found." << endl;
-    return;
+    ofstream write;
+    write.open(BOOK_FILE, ios::out);
+
+    for (int i = 0; i < count; i++)
+    {
+        if (i != 0)
+            write << "\n";
+        write << books[i].id << "\n"
+              << books[i].title << "\n"
+              << books[i].author << "\n"
+              << books[i].quantity << "\n"
+              << books[i].price;
+    }
+    write.close();
+
+    cout << "Book updated successfully!" << endl;
 }
-ofstream write;
-write.open(BOOK_FILE, ios::out);
 
-for (int i = 0; i < count; i++)
+int GetLatestBookID()
 {
-    if (i != 0)
-        write << "\n";
-    write << books[i].id << "\n"
-          << books[i].title << "\n"
-          << books[i].author << "\n"
-          << books[i].quantity << "\n"
-          << books[i].price;
-}
-write.close();
-
-cout << "Book updated successfully!" << endl;
-}
-
-int getLatestBookID()
-{
-    ifstream read("books.txt");
+    ifstream read(BOOK_FILE);
     Book book;
     int latestId = 0;
 
@@ -504,4 +573,141 @@ int getLatestBookID()
 
     read.close();
     return latestId;
+}
+
+void DisplaySalesReport()
+{
+    struct Sale sales[MAX_SALES];
+    int i = 0;
+    double grandTotal = 0;
+    ifstream read;
+
+	DisplayLoading();
+
+    read.open(SALE_FILE);
+
+    if (read.fail())
+    {
+        cout << "Error opening sales file." << endl;
+        return;
+    }
+
+    while (!read.eof() && i < MAX_SALES)
+    {
+        read >> sales[i].id;
+        read.ignore();
+        read.getline(sales[i].title, 100);
+        read >> sales[i].bookId;
+        read >> sales[i].totalSold;
+        read >> sales[i].totalPrice;
+        read.ignore();
+        i++;
+    }
+    read.close();
+
+    cout << "============================= SALES REPORT ==============================" << endl;
+    cout
+        << setw(6) << "ID"
+        << setw(25) << "Title"
+        << setw(12) << "Total Sold"
+        << setw(12) << "Total (RM)" << endl;
+    cout << "-------------------------------------------------------------------------" << endl;
+
+    for (int j = 0; j < i; j++)
+    {
+        cout
+            << setw(6) << sales[j].id
+            << setw(25) << sales[j].title
+            << setw(12) << sales[j].totalSold
+            << fixed << setprecision(2)
+            << setw(12) << sales[j].totalPrice << endl;
+
+        grandTotal += sales[j].totalPrice;
+    }
+
+    cout << "-------------------------------------------------------------------------" << endl
+         << endl;
+
+    cout << "-------------------------------------------------------------------------" << endl;
+    cout << right << setw(66) << "Total Revenue: RM " << fixed << setprecision(2) << grandTotal << endl;
+    cout << "=========================================================================" << endl;
+}
+
+void GenerateSalesReport()
+{
+    struct Sale sales[MAX_SALES];
+    int i = 0;
+    ifstream read;
+
+    read.open(SALE_FILE);
+
+    cout << endl << endl;
+    cout << "==================================================================" << endl;
+    cout << "||      G E N E R A T I N G      R E P O R T     F I L E        ||" << endl;
+    cout << "==================================================================" << endl;
+
+    if (read.fail())
+    {
+        cout << "Error opening sales file." << endl;
+        return;
+    }
+
+    while (!read.eof() && i < MAX_SALES)
+    {
+        read >> sales[i].id;
+        read.ignore();
+        read.getline(sales[i].title, 100);
+        read >> sales[i].bookId;
+        read >> sales[i].totalSold;
+        read >> sales[i].totalPrice;
+        read.ignore();
+        i++;
+    }
+    read.close();
+
+    ofstream write;
+    write.open(SALE_REPORT_FILE, ios::out);
+
+    if (write.fail())
+    {
+        cout << "Error writing to sales report file." << endl;
+        return;
+    }
+
+    write << "================================ SALES REPORT ====================================" << endl;
+    write << setw(10) << "Sale ID"
+          << setw(30) << "Title"
+          << setw(10) << "Book ID"
+          << setw(15) << "Quantity Sold"
+          << setw(15) << "Total Price" << "\n";
+    write << "----------------------------------------------------------------------------------" << endl;
+
+    double grandTotal = 0;
+
+    for (int j = 0; j < i; j++)
+    {
+        write << setw(10) << sales[j].id
+              << setw(30) << sales[j].title
+              << setw(10) << sales[j].bookId
+              << setw(15) << sales[j].totalSold
+              << fixed << setprecision(2)
+              << setw(15) << sales[j].totalPrice << "\n";
+
+        grandTotal += sales[j].totalPrice;
+    }
+
+    write << "----------------------------------------------------------------------------------" << endl;
+    write << right << setw(70) << "Total Revenue: RM " << fixed << setprecision(2) << grandTotal << endl;
+    write << "==================================================================================" << endl;
+
+    write.close();
+
+    sleep(2);
+
+    cout << endl
+         << endl
+         << "Sales report generated successfully!" << endl
+         << endl;
+         
+    cout << "Report can be view in " << SALE_REPORT_FILE << endl << endl;
 }
