@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iomanip>
 #include <windows.h>
+#include <cstring>
 
 using namespace std;
 
@@ -78,14 +79,14 @@ main()
             DisplayAdminMenu();
             do
             {
-                cout << "Please enter your choice (0, 1, 2, 3 or 4): ";
+                cout << "Please enter your choice (0, 1, 2, 3, 4 or 5): ";
                 cin >> choice;
 
-                if (choice != 0 && choice != 1 && choice != 2 && choice != 3 && choice != 4)
+                if (choice != 0 && choice != 1 && choice != 2 && choice != 3 && choice != 4 && choice != 5)
                 {
                     cout << "Invalid choice. Please try again." << endl;
                 }
-            } while (choice != 0 && choice != 1 && choice != 2 && choice != 3 && choice != 4);
+            } while (choice != 0 && choice != 1 && choice != 2 && choice != 3 && choice != 4 && choice != 5);
             cout << endl;
             system("cls");
 
@@ -172,8 +173,23 @@ main()
                 } while (choice != 0 && choice != 1);
                 system("cls");
             }
-            // Log out
             else if (choice == 4)
+            {
+                system("cls");
+                DisplayInventoryStatus();
+                DisplayBackToMenuBanner();
+                do
+                {
+                    cin >> choice;
+
+                    if (choice != 0)
+                    {
+                        cout << "Invalid choice. Please try again." << endl;
+                    }
+                } while (choice != 0);
+            }
+            // Log out
+            else if (choice == 5)
             {
                 isLogin = false;
                 DisplayLogoutSuccessfulBanner();
@@ -580,13 +596,13 @@ void DisplaySalesReport()
 
     i = ReadBooksData(books, i);
 
-    cout << "============================= SALES REPORT ==============================" << endl;
+    cout << "================================= SALES REPORT ==================================" << endl;
     cout
         << setw(6) << "ID"
         << setw(25) << "Title"
         << setw(12) << "Sold Qty"
         << setw(15) << "Total (RM)" << endl;
-    cout << "-------------------------------------------------------------------------" << endl;
+    cout << "---------------------------------------------------------------------------------" << endl;
 
     for (int j = 0; j < i; j++)
     {
@@ -602,7 +618,7 @@ void DisplaySalesReport()
         grandTotal += total;
     }
 
-    cout << "-------------------------------------------------------------------------" << endl
+    cout << "---------------------------------------------------------------------------------" << endl
          << endl;
     cout << right << setw(58) << "Total Revenue: RM " << fixed << setprecision(2) << grandTotal << endl;
     cout << "=========================================================================" << endl;
@@ -618,7 +634,7 @@ void GenerateSalesReport()
     cout << "==================================================================" << endl;
     cout << "||      G E N E R A T I N G      R E P O R T     F I L E        ||" << endl;
     cout << "==================================================================" << endl;
-    
+
     i = ReadBooksData(books, i);
 
     ofstream write(SALE_REPORT_FILE, ios::out);
@@ -681,34 +697,35 @@ void DisplayInventoryStatus()
 
     i = ReadBooksData(books, i);
 
-    cout << "=========================== INVENTORY STATUS ===========================" << endl;
-    cout
-        << setw(30) << left << "Book Title"
-        << setw(15) << "Qty Sold"
-        << setw(15) << "Qty Left"
-        << setw(20) << "Status" << endl;
-    cout << "----------------------------------------------------------------------" << endl;
+    cout << "=================================== INVENTORY STATUS ===================================" << endl;
+    cout << "----------------------------------------------------------------------------------------" << endl;
+    cout << left
+         << setw(30) << "Book Title"
+         << setw(15) << "Initial Qty"
+         << setw(15) << "Qty Sold"
+         << setw(15) << "Qty Left"
+         << setw(20) << "Status" << endl;
+    cout << "-----------------------------------------------------------------------------------------" << endl;
 
     for (int j = 0; j < i; j++)
     {
-        int left = books[j].stockQuantity - books[j].quantitySold;
-        string status;
+        int leftQty = books[j].stockQuantity - books[j].quantitySold;
 
-        if (left <= 0)
-            status = "Out of Stock";
-        else if (left <= 5)
-            status = "Low Stock";
+        if (leftQty <= 0)
+            strcpy(books[j].status, "Out of Stock");
+        else if (leftQty <= 5)
+            strcpy(books[j].status, "Low Stock");
         else
-            status = "Available";
+            strcpy(books[j].status, "Available");
 
-        cout
-            << setw(30) << left << books[j].title
-            << setw(15) << books[j].quantitySold
-            << setw(15) << left << left
-            << setw(20) << status << endl;
+        cout << left
+             << setw(30) << books[j].title
+             << setw(15) << books[j].stockQuantity
+             << setw(15) << books[j].quantitySold
+             << setw(15) << leftQty
+             << setw(20) << books[j].status << endl;
     }
 
-    cout << "----------------------------------------------------------------------" << endl << endl;
+    cout << "-----------------------------------------------------------------------------------------" << endl
+         << endl;
 }
-
-
