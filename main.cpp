@@ -9,20 +9,12 @@ using namespace std;
 #define SALE_FILE "sales.txt"
 #define SALE_REPORT_FILE "sales_report.txt"
 #define MAX_BOOKS 100
-#define MAX_SALES 100
 
 struct Book
 {
-    char title[100], author[100];
-    int id, quantity;
+    char title[100], author[100], status[50];
+    int id, stockQuantity, quantitySold;
     double price;
-};
-
-struct Sale
-{
-    char title[100];
-    int id, bookId, totalSold;
-    double totalPrice;
 };
 
 void DisplayWelcomeBanner();
@@ -40,6 +32,8 @@ void DisplaySalesReport();
 void GenerateSalesReport();
 void DisplayBackToMenuBannerSalesReport();
 void DisplayLoading();
+int ReadBooksData(Book books[], int i);
+void DisplayInventoryStatus();
 
 main()
 {
@@ -91,7 +85,7 @@ main()
                 {
                     cout << "Invalid choice. Please try again." << endl;
                 }
-            } while (choice != 0 && choice != 1 && choice != 2 && choice != 3  && choice != 4);
+            } while (choice != 0 && choice != 1 && choice != 2 && choice != 3 && choice != 4);
             cout << endl;
             system("cls");
 
@@ -266,7 +260,8 @@ void DisplayAdminMenu()
     cout << "||  [1] Add Book                                                    ||" << endl;
     cout << "||  [2] Update Book                                                 ||" << endl;
     cout << "||  [3] Sales Report                                                ||" << endl;
-    cout << "||  [4] Logout Program                                              ||" << endl;
+    cout << "||  [4] Inventory Status                                            ||" << endl;
+    cout << "||  [5] Logout Program                                              ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "======================================================================" << endl;
 }
@@ -291,77 +286,58 @@ void DisplayBackToMenuBannerSalesReport()
     cout << "||                Press 0 to go back to the menu                     ||" << endl;
     cout << "||                Press 1 to generate report                         ||" << endl;
     cout << "||                                                                   ||" << endl;
-    cout << "======================================================================+" << endl;
-    ;
+    cout << "=======================================================================" << endl;
     cout << "Enter your choice: ";
 }
 
 void DisplayLoading()
 {
-    cout << endl << endl;
+    cout << endl
+         << endl;
     cout << setw(50) << "==============================" << endl;
     cout << setw(50) << "||      L O A D I N G       ||" << endl;
     cout << setw(50) << "==============================" << endl;
-
-	sleep(1);
-	system("cls");
+    sleep(1);
+    system("cls");
 }
 
 void DisplayBooks()
 {
     struct Book books[MAX_BOOKS];
     int i = 0;
-    ifstream read;
-	
-	DisplayLoading();
-	
-    read.open(BOOK_FILE);
+    DisplayLoading();
 
-    if (read.fail())
-    {
-        cout << "Error opening books file." << endl;
-        return;
-    }
+    i = ReadBooksData(books, i);
 
-    while (!read.eof())
-    {
-        read >> books[i].id;
-        read.ignore();
-        read.getline(books[i].title, 100);
-        read.getline(books[i].author, 100);
-
-        read >> books[i].quantity;
-        read >> books[i].price;
-        read.ignore();
-
-        i++;
-    }
-    
-    cout << "============================= BOOK LIST ===============================" << endl;
+    cout << "============================================= BOOK LIST ==============================================" << endl;
+    cout << "------------------------------------------------------------------------------------------------------" << endl;
     cout
         << setw(6) << "ID"
         << setw(25) << "Title"
         << setw(20) << "Author"
-        << setw(10) << "Quantity"
+        << setw(12) << "InitialQty"
+        << setw(12) << "SoldQty"
+        << setw(12) << "InStockQty"
         << setw(10) << "Price" << endl;
-    cout << "-----------------------------------------------------------------------" << endl;
+    cout << "------------------------------------------------------------------------------------------------------" << endl;
 
     for (int j = 0; j < i; j++)
     {
+        // int in
         cout
             << setw(6) << books[j].id
             << setw(25) << books[j].title
             << setw(20) << books[j].author
-            << setw(10) << books[j].quantity
+            << setw(12) << books[j].stockQuantity
+            << setw(12) << books[j].quantitySold
+            << setw(12) << books[j].stockQuantity - books[j].quantitySold
             << fixed << setprecision(2)
             << setw(10) << books[j].price << endl;
     }
 
-    cout << "-----------------------------------------------------------------------" << endl
+    cout << "------------------------------------------------------------------------------------------------------" << endl
          << endl;
 }
-
-
 
 void AddBook()
 {
@@ -397,13 +373,13 @@ void AddBook()
 
     do
     {
-        cout << "Enter book quantity: ";
-        cin >> book.quantity;
-        if (book.quantity < 1)
+        cout << "Enter book quantity to sell : ";
+        cin >> book.stockQuantity;
+        if (book.stockQuantity < 1)
         {
             cout << "Invalid input. Please enter a non-negative integer for quantity." << endl;
         }
-    } while (book.quantity < 1);
+    } while (book.stockQuantity < 1);
 
     do
     {
@@ -414,6 +390,8 @@ void AddBook()
             cout << "Invalid input. Please enter a non-negative number for price." << endl;
         }
     } while (book.price < 1);
+
+    book.quantitySold = 0;
 
     write.open(BOOK_FILE, ios::app);
 
@@ -427,7 +405,8 @@ void AddBook()
     write << book.id << "\n"
           << book.title << "\n"
           << book.author << "\n"
-          << book.quantity << "\n"
+          << book.stockQuantity << "\n"
+          << book.quantitySold << "\n"
           << book.price;
 
     write.close();
@@ -440,32 +419,10 @@ void UpdateBookByID()
     Book books[MAX_BOOKS];
     int count = 0, targetId;
     bool found = false;
-    ifstream read;
 
     cout << "============================= UPDATE BOOK ===============================" << endl;
 
-    read.open(BOOK_FILE);
-
-    if (read.fail())
-    {
-        cout << "Error opening books file." << endl;
-        return;
-    }
-
-    while (!read.eof())
-    {
-        read >> books[count].id;
-        read.ignore();
-        read.getline(books[count].title, 100);
-        read.getline(books[count].author, 100);
-
-        read >> books[count].quantity;
-        read >> books[count].price;
-        read.ignore();
-
-        count++;
-    }
-    read.close();
+    count = ReadBooksData(books, count);
 
     cout << "Enter the Book ID to update: ";
     cin >> targetId;
@@ -477,56 +434,59 @@ void UpdateBookByID()
             found = true;
             cout << "\n=========================== CURRENT BOOK INFO ===========================" << endl;
             cout << left;
-            cout << setw(12) << "ID:" << books[i].id << endl;
-            cout << setw(12) << "Title:" << books[i].title << endl;
-            cout << setw(12) << "Author:" << books[i].author << endl;
-            cout << setw(12) << "Quantity:" << books[i].quantity << endl;
-            cout << setw(12) << "Price:" << books[i].price << endl;
-            cout << "============================================================================" << endl
+            cout << setw(24) << "ID" << ": " << setw(20) << books[i].id << endl;
+            cout << setw(24) << "Title" << ": " << setw(20) << books[i].title << endl;
+            cout << setw(24) << "Author" << ": " << setw(20) << books[i].author << endl;
+            cout << setw(24) << "Initial Stock Quantity" << ": " << setw(20) << books[i].stockQuantity << endl;
+            cout << setw(24) << "Sold Quantity" << ": " << setw(20) << books[i].quantitySold << endl;
+            cout << setw(24) << "Stock Left" << ": " << setw(20) << (books[i].stockQuantity - books[i].quantitySold) << endl;
+            cout << setw(24) << "Price" << ": " << setw(20) << fixed << setprecision(2) << books[i].price << endl;
+            cout << "==========================================================================" << endl
                  << endl;
+
+            do
+            {
+                cout << "Enter book title to update: ";
+                cin.ignore();
+                cin.getline(books[i].title, 100);
+                if (books[i].title[0] == '\0')
+                {
+                    cout << "Title cannot be empty." << endl;
+                }
+            } while (books[i].title[0] == '\0');
+
+            do
+            {
+                cout << "Enter book author to update: ";
+                cin.getline(books[i].author, 100);
+                if (books[i].author[0] == '\0')
+                {
+                    cout << "Author name cannot be empty." << endl;
+                }
+            } while (books[i].author[0] == '\0');
+
+            do
+            {
+                cout << "Enter book initial stock quantity to update: ";
+                cin >> books[i].stockQuantity;
+                if (books[i].stockQuantity < 1)
+                {
+                    cout << "Invalid input. Please enter a non-negative integer for quantity." << endl;
+                }
+            } while (books[i].stockQuantity < 1);
+
+            do
+            {
+                cout << "Enter book price to update: ";
+                cin >> books[i].price;
+                if (books[i].price < 1)
+                {
+                    cout << "Invalid input. Please enter a non-negative number for price." << endl;
+                }
+            } while (books[i].price < 1);
+
+            break;
         }
-        do
-        {
-            cout << "Enter book title to update: ";
-            cin.ignore();
-            cin.getline(books[i].title, 100);
-            if (books[i].title[0] == '\0')
-            {
-                cout << "Title cannot be empty." << endl;
-            }
-        } while (books[i].title[0] == '\0');
-
-        do
-        {
-            cout << "Enter book author to update: ";
-            cin.getline(books[i].author, 100);
-            if (books[i].author[0] == '\0')
-            {
-                cout << "Author name cannot be empty." << endl;
-            }
-        } while (books[i].author[0] == '\0');
-
-        do
-        {
-            cout << "Enter book quantity to update: ";
-            cin >> books[i].quantity;
-            if (books[i].quantity < 1)
-            {
-                cout << "Invalid input. Please enter a non-negative integer for quantity." << endl;
-            }
-        } while (books[i].quantity < 1);
-
-        do
-        {
-            cout << "Enter book price to update: ";
-            cin >> books[i].price;
-            if (books[i].price < 1)
-            {
-                cout << "Invalid input. Please enter a non-negative number for price." << endl;
-            }
-        } while (books[i].price < 1);
-
-        break;
     }
 
     if (!found)
@@ -541,11 +501,15 @@ void UpdateBookByID()
     for (int i = 0; i < count; i++)
     {
         if (i != 0)
+        {
             write << "\n";
+        }
+
         write << books[i].id << "\n"
               << books[i].title << "\n"
               << books[i].author << "\n"
-              << books[i].quantity << "\n"
+              << books[i].stockQuantity << "\n"
+              << books[i].quantitySold << "\n"
               << books[i].price;
     }
     write.close();
@@ -564,7 +528,8 @@ int GetLatestBookID()
         read.ignore();
         read.getline(book.title, 100);
         read.getline(book.author, 100);
-        read >> book.quantity;
+        read >> book.stockQuantity;
+        read >> book.quantitySold;
         read >> book.price;
         read.ignore();
 
@@ -575,98 +540,88 @@ int GetLatestBookID()
     return latestId;
 }
 
-void DisplaySalesReport()
+int ReadBooksData(Book books[], int i)
 {
-    struct Sale sales[MAX_SALES];
-    int i = 0;
-    double grandTotal = 0;
     ifstream read;
 
-	DisplayLoading();
-
-    read.open(SALE_FILE);
+    read.open(BOOK_FILE);
 
     if (read.fail())
     {
-        cout << "Error opening sales file." << endl;
-        return;
+        cout << "Error opening books file." << endl;
+        return 0;
     }
 
-    while (!read.eof() && i < MAX_SALES)
+    while (!read.eof())
     {
-        read >> sales[i].id;
+        read >> books[i].id;
         read.ignore();
-        read.getline(sales[i].title, 100);
-        read >> sales[i].bookId;
-        read >> sales[i].totalSold;
-        read >> sales[i].totalPrice;
+        read.getline(books[i].title, 100);
+        read.getline(books[i].author, 100);
+        read >> books[i].stockQuantity;
+        read >> books[i].quantitySold;
+        read >> books[i].price;
         read.ignore();
         i++;
     }
+
     read.close();
+
+    return i;
+}
+
+void DisplaySalesReport()
+{
+    Book books[MAX_BOOKS];
+    int i = 0;
+    double grandTotal = 0;
+
+    DisplayLoading();
+
+    i = ReadBooksData(books, i);
 
     cout << "============================= SALES REPORT ==============================" << endl;
     cout
         << setw(6) << "ID"
         << setw(25) << "Title"
-        << setw(12) << "Total Sold"
-        << setw(12) << "Total (RM)" << endl;
+        << setw(12) << "Sold Qty"
+        << setw(15) << "Total (RM)" << endl;
     cout << "-------------------------------------------------------------------------" << endl;
 
     for (int j = 0; j < i; j++)
     {
-        cout
-            << setw(6) << sales[j].id
-            << setw(25) << sales[j].title
-            << setw(12) << sales[j].totalSold
-            << fixed << setprecision(2)
-            << setw(12) << sales[j].totalPrice << endl;
+        double total = books[j].quantitySold * books[j].price;
 
-        grandTotal += sales[j].totalPrice;
+        cout
+            << setw(6) << books[j].id
+            << setw(25) << books[j].title
+            << setw(12) << books[j].quantitySold
+            << fixed << setprecision(2)
+            << setw(15) << total << endl;
+
+        grandTotal += total;
     }
 
     cout << "-------------------------------------------------------------------------" << endl
          << endl;
-
-    cout << "-------------------------------------------------------------------------" << endl;
-    cout << right << setw(66) << "Total Revenue: RM " << fixed << setprecision(2) << grandTotal << endl;
+    cout << right << setw(58) << "Total Revenue: RM " << fixed << setprecision(2) << grandTotal << endl;
     cout << "=========================================================================" << endl;
 }
 
 void GenerateSalesReport()
 {
-    struct Sale sales[MAX_SALES];
+    Book books[MAX_BOOKS];
     int i = 0;
-    ifstream read;
 
-    read.open(SALE_FILE);
-
-    cout << endl << endl;
+    cout << endl
+         << endl;
     cout << "==================================================================" << endl;
     cout << "||      G E N E R A T I N G      R E P O R T     F I L E        ||" << endl;
     cout << "==================================================================" << endl;
+    
+    i = ReadBooksData(books, i);
 
-    if (read.fail())
-    {
-        cout << "Error opening sales file." << endl;
-        return;
-    }
-
-    while (!read.eof() && i < MAX_SALES)
-    {
-        read >> sales[i].id;
-        read.ignore();
-        read.getline(sales[i].title, 100);
-        read >> sales[i].bookId;
-        read >> sales[i].totalSold;
-        read >> sales[i].totalPrice;
-        read.ignore();
-        i++;
-    }
-    read.close();
-
-    ofstream write;
-    write.open(SALE_REPORT_FILE, ios::out);
+    ofstream write(SALE_REPORT_FILE, ios::out);
 
     if (write.fail())
     {
@@ -675,10 +630,10 @@ void GenerateSalesReport()
     }
 
     write << "================================ SALES REPORT ====================================" << endl;
-    write << setw(10) << "Sale ID"
+    write << setw(10) << "Book ID"
           << setw(30) << "Title"
-          << setw(10) << "Book ID"
-          << setw(15) << "Quantity Sold"
+          << setw(15) << "Sold Qty"
+          << setw(15) << "Unit Price"
           << setw(15) << "Total Price" << "\n";
     write << "----------------------------------------------------------------------------------" << endl;
 
@@ -686,14 +641,16 @@ void GenerateSalesReport()
 
     for (int j = 0; j < i; j++)
     {
-        write << setw(10) << sales[j].id
-              << setw(30) << sales[j].title
-              << setw(10) << sales[j].bookId
-              << setw(15) << sales[j].totalSold
-              << fixed << setprecision(2)
-              << setw(15) << sales[j].totalPrice << "\n";
+        double totalPrice = books[j].quantitySold * books[j].price;
 
-        grandTotal += sales[j].totalPrice;
+        write << setw(10) << books[j].id
+              << setw(30) << books[j].title
+              << setw(15) << books[j].quantitySold
+              << fixed << setprecision(2)
+              << setw(15) << books[j].price
+              << setw(15) << totalPrice << "\n";
+
+        grandTotal += totalPrice;
     }
 
     write << "----------------------------------------------------------------------------------" << endl;
@@ -708,6 +665,50 @@ void GenerateSalesReport()
          << endl
          << "Sales report generated successfully!" << endl
          << endl;
-         
-    cout << "Report can be view in " << SALE_REPORT_FILE << endl << endl;
+
+    cout << "Report can be viewed in: " << SALE_REPORT_FILE << endl
+         << endl;
 }
+
+void DisplayInventoryStatus()
+{
+    Book books[MAX_BOOKS];
+    int i = 0;
+
+    ifstream read(BOOK_FILE);
+
+    DisplayLoading();
+
+    i = ReadBooksData(books, i);
+
+    cout << "=========================== INVENTORY STATUS ===========================" << endl;
+    cout
+        << setw(30) << left << "Book Title"
+        << setw(15) << "Qty Sold"
+        << setw(15) << "Qty Left"
+        << setw(20) << "Status" << endl;
+    cout << "----------------------------------------------------------------------" << endl;
+
+    for (int j = 0; j < i; j++)
+    {
+        int left = books[j].stockQuantity - books[j].quantitySold;
+        string status;
+
+        if (left <= 0)
+            status = "Out of Stock";
+        else if (left <= 5)
+            status = "Low Stock";
+        else
+            status = "Available";
+
+        cout
+            << setw(30) << left << books[j].title
+            << setw(15) << books[j].quantitySold
+            << setw(15) << left << left
+            << setw(20) << status << endl;
+    }
+
+    cout << "----------------------------------------------------------------------" << endl << endl;
+}
+
+
