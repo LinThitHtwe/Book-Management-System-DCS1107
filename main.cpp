@@ -10,6 +10,10 @@ using namespace std;
 #define SALE_FILE "sales.txt"
 #define SALE_REPORT_FILE "sales_report.txt"
 #define MAX_BOOKS 100
+#define RED_COLOR "\033[31m"
+#define YELLOW_COLOR "\033[33m"
+#define GREEN_COLOR "\033[32m"
+#define WHITE_COLOR "\033[0m"
 
 struct Book
 {
@@ -35,12 +39,15 @@ void DisplayBackToMenuBannerSalesReport();
 void DisplayLoading();
 int ReadBooksData(Book books[], int i);
 void DisplayInventoryStatus();
+void BubbleSortBooks(Book books[], int size);
 
 main()
 {
     int choice;
     bool isLogin = false, shouldQuitProgram = false;
     DisplayWelcomeBanner();
+    sleep(2);
+    system("cls");
     while (!shouldQuitProgram)
     {
 
@@ -187,6 +194,7 @@ main()
                         cout << "Invalid choice. Please try again." << endl;
                     }
                 } while (choice != 0);
+                system("cls");
             }
             // Log out
             else if (choice == 5)
@@ -339,7 +347,6 @@ void DisplayBooks()
 
     for (int j = 0; j < i; j++)
     {
-        // int in
         cout
             << setw(6) << books[j].id
             << setw(25) << books[j].title
@@ -586,6 +593,22 @@ int ReadBooksData(Book books[], int i)
     return i;
 }
 
+void BubbleSortBooks(Book books[], int size)
+{
+    for (int i = 0; i < size - 1; i++)
+    {
+        for (int j = 0; j < size - i - 1; j++)
+        {
+            if (books[j].quantitySold < books[j + 1].quantitySold)
+            {
+                Book temp = books[j];
+                books[j] = books[j + 1];
+                books[j + 1] = temp;
+            }
+        }
+    }
+}
+
 void DisplaySalesReport()
 {
     Book books[MAX_BOOKS];
@@ -621,7 +644,36 @@ void DisplaySalesReport()
     cout << "---------------------------------------------------------------------------------" << endl
          << endl;
     cout << right << setw(58) << "Total Revenue: RM " << fixed << setprecision(2) << grandTotal << endl;
-    cout << "=========================================================================" << endl;
+    cout << "=================================================================================" << endl
+         << endl
+         << endl
+         << endl;
+
+    BubbleSortBooks(books, i);
+
+    cout << "============================ TOP 3 BEST-SELLING BOOKS ===========================" << endl;
+    cout
+        << setw(6) << "Rank"
+        << setw(25) << "Title"
+        << setw(12) << "Sold Qty"
+        << setw(15) << "Total (RM)" << endl;
+    cout << "---------------------------------------------------------------------------------" << endl;
+
+    for (int j = 0; j < 3; j++)
+    {
+        double total = books[j].quantitySold * books[j].price;
+
+        cout
+            << setw(6) << (j + 1)
+            << setw(25) << books[j].title
+            << setw(12) << books[j].quantitySold
+            << fixed << setprecision(2)
+            << setw(15) << total << endl;
+    }
+
+    cout << "=================================================================================" << endl
+         << endl
+         << endl;
 }
 
 void GenerateSalesReport()
@@ -671,7 +723,35 @@ void GenerateSalesReport()
 
     write << "----------------------------------------------------------------------------------" << endl;
     write << right << setw(70) << "Total Revenue: RM " << fixed << setprecision(2) << grandTotal << endl;
-    write << "==================================================================================" << endl;
+    write << "==================================================================================" << endl
+          << endl
+          << endl;
+
+    BubbleSortBooks(books, i);
+
+    write << "============================ TOP 3 BEST-SELLING BOOKS ===========================" << endl;
+    write
+        << setw(6) << "Rank"
+        << setw(25) << "Title"
+        << setw(12) << "Sold Qty"
+        << setw(15) << "Total (RM)" << endl;
+    write << "---------------------------------------------------------------------------------" << endl;
+
+    for (int j = 0; j < 3; j++)
+    {
+        double total = books[j].quantitySold * books[j].price;
+
+        write
+            << setw(6) << (j + 1)
+            << setw(25) << books[j].title
+            << setw(12) << books[j].quantitySold
+            << fixed << setprecision(2)
+            << setw(15) << total << endl;
+    }
+
+    write << "=================================================================================" << endl
+          << endl
+          << endl;
 
     write.close();
 
@@ -691,8 +771,6 @@ void DisplayInventoryStatus()
     Book books[MAX_BOOKS];
     int i = 0;
 
-    ifstream read(BOOK_FILE);
-
     DisplayLoading();
 
     i = ReadBooksData(books, i);
@@ -711,19 +789,30 @@ void DisplayInventoryStatus()
     {
         int leftQty = books[j].stockQuantity - books[j].quantitySold;
 
-        if (leftQty <= 0)
-            strcpy(books[j].status, "Out of Stock");
-        else if (leftQty <= 5)
-            strcpy(books[j].status, "Low Stock");
-        else
-            strcpy(books[j].status, "Available");
+        char colorCode[10];
 
-        cout << left
-             << setw(30) << books[j].title
-             << setw(15) << books[j].stockQuantity
-             << setw(15) << books[j].quantitySold
-             << setw(15) << leftQty
-             << setw(20) << books[j].status << endl;
+        if (leftQty <= 0)
+        {
+            strcpy(books[j].status, "Out of Stock");
+            strcpy(colorCode, RED_COLOR);
+        }
+        else if (leftQty <= 5)
+        {
+            strcpy(books[j].status, "Low Stock");
+            strcpy(colorCode, YELLOW_COLOR);
+        }
+        else
+        {
+            strcpy(books[j].status, "Available");
+            strcpy(colorCode, GREEN_COLOR);
+        }
+
+        cout
+            << setw(30) << books[j].title
+            << setw(15) << books[j].stockQuantity
+            << setw(15) << books[j].quantitySold
+            << setw(15) << leftQty << colorCode
+            << setw(20) << books[j].status << WHITE_COLOR << endl;
     }
 
     cout << "-----------------------------------------------------------------------------------------" << endl
