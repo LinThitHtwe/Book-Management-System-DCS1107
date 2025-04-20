@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -7,19 +8,26 @@
 using namespace std;
 
 #define BOOK_FILE "books.txt"
-#define SALE_FILE "sales.txt"
+#define USER_FILE "users.txt"
 #define SALE_REPORT_FILE "sales_report.txt"
-#define MAX_BOOKS 100
+#define MAX_ARRAY_SIZE 100
 #define RED_COLOR "\033[31m"
 #define YELLOW_COLOR "\033[33m"
 #define GREEN_COLOR "\033[32m"
 #define WHITE_COLOR "\033[0m"
+#define SUPPLIER_ROLE "supplier"
 
 struct Book
 {
     char title[100], author[100], status[50];
-    int id, stockQuantity, quantitySold;
+    int id, stockQuantity, quantitySold, supplierId;
     double price;
+};
+
+struct User
+{
+    int id;
+    char password[100], email[100], role[50];
 };
 
 void DisplayWelcomeBanner();
@@ -38,8 +46,12 @@ void GenerateSalesReport();
 void DisplayBackToMenuBannerSalesReport();
 void DisplayLoading();
 int ReadBooksData(Book books[], int i);
+int ReadUsersData(User users[], int i);
 void DisplayInventoryStatus();
 void BubbleSortBooks(Book books[], int size);
+bool IsSupplierIdExists(User users[], int userCount, int supplierId);
+int GetSupplierList(User suppliers[], int i);
+void DisplaySupplierList();
 
 main()
 {
@@ -65,6 +77,7 @@ main()
             {
                 shouldQuitProgram = true;
                 system("cls");
+                DisplayLoading();
                 DisplayProgramQuitBanner();
                 break;
             }
@@ -82,18 +95,17 @@ main()
 
         while (isLogin)
         {
-
             DisplayAdminMenu();
             do
             {
-                cout << "Please enter your choice (0, 1, 2, 3, 4 or 5): ";
+                cout << "Please enter your choice (0, 1, 2, 3, 4, 5 or 6): ";
                 cin >> choice;
 
-                if (choice != 0 && choice != 1 && choice != 2 && choice != 3 && choice != 4 && choice != 5)
+                if (choice != 0 && choice != 1 && choice != 2 && choice != 3 && choice != 4 && choice != 5 && choice != 6)
                 {
                     cout << "Invalid choice. Please try again." << endl;
                 }
-            } while (choice != 0 && choice != 1 && choice != 2 && choice != 3 && choice != 4 && choice != 5);
+            } while (choice != 0 && choice != 1 && choice != 2 && choice != 3 && choice != 4 && choice != 5 && choice != 6);
             cout << endl;
             system("cls");
 
@@ -196,11 +208,30 @@ main()
                 } while (choice != 0);
                 system("cls");
             }
-            // Log out
+
             else if (choice == 5)
             {
+                system("cls");
+                DisplaySupplierList();
+                DisplayBackToMenuBanner();
+                do
+                {
+                    cin >> choice;
+
+                    if (choice != 0)
+                    {
+                        cout << "Invalid choice. Please try again." << endl;
+                    }
+                } while (choice != 0);
+                system("cls");
+            }
+            // Log out
+            else if (choice == 6)
+            {
                 isLogin = false;
+                DisplayLoading();
                 DisplayLogoutSuccessfulBanner();
+                sleep(1);
                 break;
             }
         }
@@ -241,7 +272,6 @@ void DisplayLogoutSuccessfulBanner()
     cout << "||                                                                  ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "||                   L O G O U T   S U C C E S S F U L              ||" << endl;
-    cout << "||                          W E L C O M E !                         ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "||                                                                  ||" << endl;
@@ -327,7 +357,7 @@ void DisplayLoading()
 
 void DisplayBooks()
 {
-    struct Book books[MAX_BOOKS];
+    struct Book books[MAX_ARRAY_SIZE];
     int i = 0;
     DisplayLoading();
 
@@ -366,8 +396,12 @@ void AddBook()
 {
     ofstream write;
     struct Book book;
+
+    struct User users[MAX_ARRAY_SIZE];
     ifstream read;
-    read.open("books.txt");
+    read.open(BOOK_FILE);
+    int i = 0;
+    i = ReadUsersData(users, i);
 
     cout << "============================= ADD BOOK ===============================" << endl;
 
@@ -414,6 +448,17 @@ void AddBook()
         }
     } while (book.price < 1);
 
+    do
+    {
+        cout << "Enter supplier Id: ";
+        cin >> book.supplierId;
+
+        if (!IsSupplierIdExists(users, i, book.supplierId))
+        {
+            cout << "Supplier ID does not exist. Please try again." << endl;
+        }
+
+    } while (!IsSupplierIdExists(users, i, book.supplierId));
     book.quantitySold = 0;
 
     write.open(BOOK_FILE, ios::app);
@@ -439,7 +484,7 @@ void AddBook()
 
 void UpdateBookByID()
 {
-    Book books[MAX_BOOKS];
+    Book books[MAX_ARRAY_SIZE];
     int count = 0, targetId;
     bool found = false;
 
@@ -584,6 +629,7 @@ int ReadBooksData(Book books[], int i)
         read >> books[i].stockQuantity;
         read >> books[i].quantitySold;
         read >> books[i].price;
+        read >> books[i].supplierId;
         read.ignore();
         i++;
     }
@@ -591,6 +637,62 @@ int ReadBooksData(Book books[], int i)
     read.close();
 
     return i;
+}
+
+int ReadUsersData(User users[], int i)
+{
+    ifstream read;
+
+    read.open(USER_FILE);
+
+    if (read.fail())
+    {
+        cout << "Error opening users file." << endl;
+        return 0;
+    }
+
+    while (read >> users[i].id)
+    {
+        read.ignore();
+        read.getline(users[i].email, 100);
+        read.getline(users[i].password, 100);
+        read.getline(users[i].role, 50);
+        i++;
+    }
+
+    read.close();
+
+    return i;
+}
+
+bool IsSupplierIdExists(User users[], int userCount, int supplierId)
+{
+    for (int i = 0; i < userCount; i++)
+    {
+        if (users[i].id == supplierId && strcmp(users[i].role, SUPPLIER_ROLE) == 0)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+int GetSupplierList(User suppliers[], int i)
+{
+    User allUsers[MAX_ARRAY_SIZE];
+    int totalUsers = ReadUsersData(allUsers, 0);
+    int supplierCount = 0;
+
+    for (int j = 0; j < totalUsers; j++)
+    {
+        if (strcmp(allUsers[j].role, SUPPLIER_ROLE) == 0)
+        {
+            suppliers[supplierCount] = allUsers[j];
+            supplierCount++;
+        }
+    }
+
+    return supplierCount;
 }
 
 void BubbleSortBooks(Book books[], int size)
@@ -611,7 +713,7 @@ void BubbleSortBooks(Book books[], int size)
 
 void DisplaySalesReport()
 {
-    Book books[MAX_BOOKS];
+    Book books[MAX_ARRAY_SIZE];
     int i = 0;
     double grandTotal = 0;
 
@@ -678,7 +780,7 @@ void DisplaySalesReport()
 
 void GenerateSalesReport()
 {
-    Book books[MAX_BOOKS];
+    Book books[MAX_ARRAY_SIZE];
     int i = 0;
 
     cout << endl
@@ -768,7 +870,7 @@ void GenerateSalesReport()
 
 void DisplayInventoryStatus()
 {
-    Book books[MAX_BOOKS];
+    Book books[MAX_ARRAY_SIZE];
     int i = 0;
 
     DisplayLoading();
@@ -816,5 +918,31 @@ void DisplayInventoryStatus()
     }
 
     cout << "-----------------------------------------------------------------------------------------" << endl
+         << endl;
+}
+
+void DisplaySupplierList()
+{
+    struct User suppliers[MAX_ARRAY_SIZE];
+    int count = GetSupplierList(suppliers, 0);
+
+    DisplayLoading();
+
+    cout << "======================================== SUPPLIER LIST =========================================" << endl;
+    cout << "------------------------------------------------------------------------------------------------" << endl;
+    cout
+        << setw(6) << "ID"
+        << setw(30) << "Email" << endl;
+    cout << "------------------------------------------------------------------------------------------------" << endl;
+
+    for (int i = 0; i < count; i++)
+    {
+        cout
+            << setw(6) << suppliers[i].id
+            << setw(30) << suppliers[i].email
+            << endl;
+    }
+
+    cout << "----------------------------------------------------------------------------------------------------------" << endl
          << endl;
 }
