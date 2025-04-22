@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -30,6 +29,8 @@ struct User
     char password[100], email[100], role[50];
 };
 
+bool Login(char email[50],char password[50]);
+void DisplayLogin();
 void DisplayWelcomeBanner();
 void DisplayOptionsMenu();
 void DisplayLoginSuccessfulBanner();
@@ -52,6 +53,7 @@ void BubbleSortBooks(Book books[], int size);
 bool IsSupplierIdExists(User users[], int userCount, int supplierId);
 int GetSupplierList(User suppliers[], int i);
 void DisplaySupplierList();
+void DisplayNotifications();
 
 main()
 {
@@ -73,6 +75,26 @@ main()
             {
                 cout << "Invalid choice. Please try again." << endl;
             }
+            else if (choice==0)
+            {
+            	system("cls");
+            	DisplayLogin();
+            	do{
+				
+            	char email[50],password[50];
+            	cout<<"Enter your email:";
+            	cin.ignore(); 
+            	cin.getline(email,50);
+				
+            	cout<<"\nEnter your password:";
+            	cin.getline(password,50);
+            	
+            	isLogin=Login(email,password);
+            	if(!isLogin){
+            		cout << "Invalid Email or Password. Try Again";
+				}
+            }while(!isLogin);
+        }
             else if (choice == 3)
             {
                 shouldQuitProgram = true;
@@ -101,11 +123,11 @@ main()
                 cout << "Please enter your choice (0, 1, 2, 3, 4, 5 or 6): ";
                 cin >> choice;
 
-                if (choice != 0 && choice != 1 && choice != 2 && choice != 3 && choice != 4 && choice != 5 && choice != 6)
+                if (choice != 0 && choice != 1 && choice != 2 && choice != 3 && choice != 4 && choice != 5 && choice != 6 && choice != 7)
                 {
                     cout << "Invalid choice. Please try again." << endl;
                 }
-            } while (choice != 0 && choice != 1 && choice != 2 && choice != 3 && choice != 4 && choice != 5 && choice != 6);
+            } while (choice != 0 && choice != 1 && choice != 2 && choice != 3 && choice != 4 && choice != 5 && choice != 6 && choice != 7);
             cout << endl;
             system("cls");
 
@@ -192,6 +214,7 @@ main()
                 } while (choice != 0 && choice != 1);
                 system("cls");
             }
+            //InventoryStatus
             else if (choice == 4)
             {
                 system("cls");
@@ -208,8 +231,25 @@ main()
                 } while (choice != 0);
                 system("cls");
             }
-
+            //Notifications
             else if (choice == 5)
+            {
+                system("cls");
+                DisplayNotifications();
+                DisplayBackToMenuBanner();
+                do
+                {
+                    cin >> choice;
+
+                    if (choice != 0)
+                    {
+                        cout << "Invalid choice. Please try again." << endl;
+                    }
+                } while (choice != 0);
+                system("cls");
+            }
+			// Supplier List
+            else if (choice == 6)
             {
                 system("cls");
                 DisplaySupplierList();
@@ -226,7 +266,7 @@ main()
                 system("cls");
             }
             // Log out
-            else if (choice == 6)
+            else if (choice == 7)
             {
                 isLogin = false;
                 DisplayLoading();
@@ -237,6 +277,39 @@ main()
         }
     }
 }
+
+
+bool Login(char email[50], char password[50])
+{
+	struct User users[100];
+	int i=0,j=0;
+	
+	i = ReadUsersData(users,i);
+	
+	for(j=0;j<i;j++)
+	{
+		if(strcmp(users[j].email,email)==0&&strcmp(users[j].password,password)==0)
+		{
+			return true;
+		}
+		
+	}
+	return false;
+}
+
+void DisplayLogin()
+{
+	 cout << "======================================================================" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                          L o g i n !                             ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "======================================================================" << endl;
+}
+
 
 void DisplayWelcomeBanner()
 {
@@ -315,7 +388,9 @@ void DisplayAdminMenu()
     cout << "||  [2] Update Book                                                 ||" << endl;
     cout << "||  [3] Sales Report                                                ||" << endl;
     cout << "||  [4] Inventory Status                                            ||" << endl;
-    cout << "||  [5] Logout Program                                              ||" << endl;
+    cout << "||  [5] Notifications                                               ||" << endl;
+    cout << "||  [6] Suppliers List                                              ||" << endl;
+    cout << "||  [7] Logout Program                                              ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "======================================================================" << endl;
 }
@@ -327,7 +402,7 @@ void DisplayBackToMenuBanner()
     cout << "||                                                                   ||" << endl;
     cout << "||                Press 0 to go back to the menu                     ||" << endl;
     cout << "||                                                                   ||" << endl;
-    cout << "======================================================================+" << endl;
+    cout << "=======================================================================" << endl;
     ;
     cout << "Enter your choice: ";
 }
@@ -484,14 +559,16 @@ void AddBook()
 
 void UpdateBookByID()
 {
-    Book books[MAX_ARRAY_SIZE];
-    int count = 0, targetId;
+    struct Book books[MAX_ARRAY_SIZE];
+    struct User users[MAX_ARRAY_SIZE];
+    int count = 0, targetId, j=0;
     bool found = false;
 
     cout << "============================= UPDATE BOOK ===============================" << endl;
 
     count = ReadBooksData(books, count);
-
+	j = ReadUsersData(users, j);
+	
     cout << "Enter the Book ID to update: ";
     cin >> targetId;
 
@@ -552,6 +629,18 @@ void UpdateBookByID()
                     cout << "Invalid input. Please enter a non-negative number for price." << endl;
                 }
             } while (books[i].price < 1);
+            
+             do
+    {
+        cout << "Enter supplier Id: ";
+        cin >> books[i].supplierId;
+
+        if (!IsSupplierIdExists(users, j, books[i].supplierId))
+        {
+            cout << "Supplier ID does not exist. Please try again." << endl;
+        }
+
+    } while (!IsSupplierIdExists(users, j, books[i].supplierId));
 
             break;
         }
@@ -578,7 +667,8 @@ void UpdateBookByID()
               << books[i].author << "\n"
               << books[i].stockQuantity << "\n"
               << books[i].quantitySold << "\n"
-              << books[i].price;
+              << books[i].price << "\n"
+			  << books[i].supplierId;
     }
     write.close();
 
@@ -599,8 +689,8 @@ int GetLatestBookID()
         read >> book.stockQuantity;
         read >> book.quantitySold;
         read >> book.price;
+        read >> book.supplierId;
         read.ignore();
-
         latestId = book.id;
     }
 
@@ -921,6 +1011,39 @@ void DisplayInventoryStatus()
          << endl;
 }
 
+void DisplayNotifications()
+{
+    Book books[MAX_ARRAY_SIZE];
+    int i = 0;
+
+    DisplayLoading();
+
+    i = ReadBooksData(books, i);
+
+    cout << "======================= STOCK NOTIFICATIONS =======================" << endl;
+
+    for (int j = 0; j < i; j++)
+    {
+        int leftQty = books[j].stockQuantity - books[j].quantitySold;
+
+        if (leftQty <= 0)
+        {
+            strcpy(books[j].status, "Out of Stock");
+            cout << "--------------------------------------------------------------" << endl;
+            cout << RED_COLOR << books[j].title << " is out of stock, need to reorder." << WHITE_COLOR <<endl;
+        }
+        else if (leftQty <= 5)
+        {
+            strcpy(books[j].status, "Low Stock");
+            cout << "--------------------------------------------------------------" << endl;
+            cout << YELLOW_COLOR << books[j].title << " is low stock, only left " << leftQty << "." <<  WHITE_COLOR<<endl;
+        }
+    }
+
+    cout << "--------------------------------------------------------------" << endl << endl;
+}
+
+
 void DisplaySupplierList()
 {
     struct User suppliers[MAX_ARRAY_SIZE];
@@ -928,12 +1051,12 @@ void DisplaySupplierList()
 
     DisplayLoading();
 
-    cout << "======================================== SUPPLIER LIST =========================================" << endl;
-    cout << "------------------------------------------------------------------------------------------------" << endl;
+    cout << "================ SUPPLIER LIST =================" << endl;
+    cout << "------------------------------------------------" << endl;
     cout
         << setw(6) << "ID"
         << setw(30) << "Email" << endl;
-    cout << "------------------------------------------------------------------------------------------------" << endl;
+    cout << "------------------------------------------------" << endl;
 
     for (int i = 0; i < count; i++)
     {
@@ -943,6 +1066,6 @@ void DisplaySupplierList()
             << endl;
     }
 
-    cout << "----------------------------------------------------------------------------------------------------------" << endl
+    cout << "------------------------------------------------" << endl
          << endl;
 }

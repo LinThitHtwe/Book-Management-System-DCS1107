@@ -1,76 +1,70 @@
 1
-War
+WarUpdated
 Sun Tzu
 50
-45
-30.00
+50
+50
 1
 2
 CleanCode
 Robert Martin
 60
 55
-50.00
+50
 1
 3
 Habits
 James Clear
 40
 35
-45.00
+45
 1
 4
 Patterns
 Erich Gamma
 25
 5
-70.00
+70
 1
 5
 Pragmatic
 Andrew Hunt
 30
 2
-65.00
+65
 1
 6
 Algorithms
 Thomas Cormen
 45
 38
-80.00
+80
 1
 7
 Refactor
 Martin Fowler
 35
 33
-55.00
+55
 1
 8
 CodeComp
 Steve McConnell
 55
 50
-60.00
+60
 1
 9
 JS Guide
 Kyle Simpson
 20
 3
-35.00
+35
 1
 10
 Crack Intvw
 Gayle McDowell
 70
 65
-75.00
+75
 1
-2
-Test
-test author
-60
-0
-300
