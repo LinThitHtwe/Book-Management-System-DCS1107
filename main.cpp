@@ -8,6 +8,7 @@ using namespace std;
 
 #define BOOK_FILE "books.txt"
 #define USER_FILE "users.txt"
+#define TRANSACTION_FILE "transactions.txt"
 #define SALE_REPORT_FILE "sales_report.txt"
 #define MAX_ARRAY_SIZE 100
 #define RED_COLOR "\033[31m"
@@ -15,6 +16,9 @@ using namespace std;
 #define GREEN_COLOR "\033[32m"
 #define WHITE_COLOR "\033[0m"
 #define SUPPLIER_ROLE "supplier"
+#define USER_ROLE "user"
+#define ADMIN_ROLE "admin"
+#define DEFAULT_PASSWORD "pass"
 
 struct Book
 {
@@ -29,16 +33,27 @@ struct User
     char password[100], email[100], role[50];
 };
 
-bool Login(char email[50],char password[50]);
+struct Transaction
+{
+    int id, userId, bookId, quantity;
+    char email[100], bookTitle[100];
+    double bookPrice;
+};
+
+bool Login(char email[50], char password[50], User &currentUser);
+bool SignUp(char email[50], char password[50], User &currentUser);
 void DisplayLogin();
+void DisplayOptionMenuUserBookList();
 void DisplayWelcomeBanner();
 void DisplayOptionsMenu();
 void DisplayLoginSuccessfulBanner();
 void DisplayBackToMenuBanner();
 void DisplayProgramQuitBanner();
 void DisplayAdminMenu();
+void DisplayUserMenu();
 void AddBook();
-void DisplayBooks();
+void DisplayBooksAdmin();
+void DisplayBooksUser();
 void DisplayLogoutSuccessfulBanner();
 void UpdateBookByID();
 int GetLatestBookID();
@@ -48,17 +63,35 @@ void DisplayBackToMenuBannerSalesReport();
 void DisplayLoading();
 int ReadBooksData(Book books[], int i);
 int ReadUsersData(User users[], int i);
+int ReadTransactionData(Transaction transactions[], int i);
 void DisplayInventoryStatus();
 void BubbleSortBooks(Book books[], int size);
 bool IsSupplierIdExists(User users[], int userCount, int supplierId);
 int GetSupplierList(User suppliers[], int i);
 void DisplaySupplierList();
 void DisplayNotifications();
+void DisplayTransactions();
+bool BuyBook(User currentUser);
+int GetLatestUserID();
+int GetLatestTransactionID();
+void DisplaySignUp();
+void DisplaySignUpSuccessfulBanner();
+void DisplayForgetPassword();
+void ForgetPassword();
+void DisplayResetPassword();
+void ResetPassword(User currentUser);
+void DisplayAddAdmin();
+void DisplayAddSupplier();
+void AddAdmin();
+void AddSupplier();
 
 main()
 {
     int choice;
-    bool isLogin = false, shouldQuitProgram = false;
+    bool isLogin = false, isSignUp = false, shouldQuitProgram = false;
+    char email[50], password[50], confirmPassword[50];
+    struct User currentUser;
+
     DisplayWelcomeBanner();
     sleep(2);
     system("cls");
@@ -73,28 +106,106 @@ main()
 
             if (choice != 0 && choice != 1 && choice != 2 && choice != 3)
             {
-                cout << "Invalid choice. Please try again." << endl;
+                cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
             }
-            else if (choice==0)
+            else if (choice == 0)
             {
-            	system("cls");
-            	DisplayLogin();
-            	do{
-				
-            	char email[50],password[50];
-            	cout<<"Enter your email:";
-            	cin.ignore(); 
-            	cin.getline(email,50);
-				
-            	cout<<"\nEnter your password:";
-            	cin.getline(password,50);
-            	
-            	isLogin=Login(email,password);
-            	if(!isLogin){
-            		cout << "Invalid Email or Password. Try Again";
-				}
-            }while(!isLogin);
-        }
+                system("cls");
+                DisplayLogin();
+                cout << endl
+                     << endl;
+                cin.ignore();
+                do
+                {
+                    cout << "Enter your email : ";
+
+                    cin.getline(email, 50);
+
+                    cout << "Enter your password :";
+                    cin.getline(password, 50);
+
+                    isLogin = Login(email, password, currentUser);
+                    if (!isLogin)
+                    {
+                        cout << "Invalid Email or Password. Try Again" << endl;
+                    }
+                    else
+                    {
+                        system("cls");
+                        DisplayLoading();
+                    }
+                } while (!isLogin);
+            }
+            else if (choice == 1)
+            {
+                system("cls");
+                DisplaySignUp();
+                cout << endl
+                     << endl;
+
+                bool isPassSame = false;
+                cin.ignore();
+                do
+                {
+                    cout << "Enter your email : ";
+                    cin.getline(email, 50);
+
+                    if (email[0] == '\0')
+                    {
+                        cout << RED_COLOR << "Email cannot be empty." << WHITE_COLOR << endl;
+                    }
+                } while (email[0] == '\0');
+                do
+                {
+                    do
+                    {
+
+                        cout << "Enter your password : ";
+                        cin.getline(password, 50);
+                        if (password[0] == '\0')
+                        {
+                            cout << RED_COLOR << "Password cannot be empty." << WHITE_COLOR << endl;
+                        }
+                    } while (password[0] == '\0');
+
+                    cout << "Enter your confirm password :";
+                    cin.getline(confirmPassword, 50);
+
+                    if (strcmp(password, confirmPassword) == 0)
+                    {
+                        isPassSame = true;
+                        isSignUp = SignUp(email, password, currentUser);
+                    }
+                    else
+                    {
+                        cout << RED_COLOR << "Confirm password should be the same as password." << WHITE_COLOR << endl;
+                    }
+
+                    if (isSignUp)
+                    {
+                        system("cls");
+                        DisplayLoading();
+                    }
+                } while (!isSignUp || !isPassSame);
+            }
+
+            else if (choice == 2)
+            {
+                system("cls");
+                DisplayForgetPassword();
+                ForgetPassword();
+                DisplayBackToMenuBanner();
+                do
+                {
+                    cin >> choice;
+
+                    if (choice != 0)
+                    {
+                        cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
+                    }
+                } while (choice != 0);
+                system("cls");
+            }
             else if (choice == 3)
             {
                 shouldQuitProgram = true;
@@ -113,92 +224,292 @@ main()
         {
             system("cls");
             DisplayLoginSuccessfulBanner();
+            sleep(1);
         }
 
-        while (isLogin)
+        if (isSignUp)
         {
-            DisplayAdminMenu();
-            do
-            {
-                cout << "Please enter your choice (0, 1, 2, 3, 4, 5 or 6): ";
-                cin >> choice;
-
-                if (choice != 0 && choice != 1 && choice != 2 && choice != 3 && choice != 4 && choice != 5 && choice != 6 && choice != 7)
-                {
-                    cout << "Invalid choice. Please try again." << endl;
-                }
-            } while (choice != 0 && choice != 1 && choice != 2 && choice != 3 && choice != 4 && choice != 5 && choice != 6 && choice != 7);
-            cout << endl;
             system("cls");
+            DisplaySignUpSuccessfulBanner();
+            sleep(1);
+        }
 
-            // Display Book
-            if (choice == 0)
+        while (isLogin || isSignUp)
+        {
+            if (strcmp(currentUser.role, ADMIN_ROLE) == 0)
             {
-                DisplayBooks();
-                DisplayBackToMenuBanner();
+
+                DisplayAdminMenu();
                 do
                 {
+                    cout << "Please enter your choice (0-11): ";
                     cin >> choice;
 
-                    if (choice != 0)
+                    if (choice < 0 || choice > 11)
                     {
-                        cout << "Invalid choice. Please try again." << endl;
+                        cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
                     }
-                } while (choice != 0);
+                } while (choice < 0 || choice > 11);
+
                 system("cls");
+
+                // Display Book
+                if (choice == 0)
+                {
+                    DisplayBooksAdmin();
+                    DisplayBackToMenuBanner();
+                    do
+                    {
+                        cin >> choice;
+
+                        if (choice != 0)
+                        {
+                            cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
+                        }
+                    } while (choice != 0);
+                    system("cls");
+                }
+                // Add Book
+                else if (choice == 1)
+                {
+                    AddBook();
+                    DisplayBackToMenuBanner();
+                    do
+                    {
+                        cin >> choice;
+
+                        if (choice != 0)
+                        {
+                            cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
+                        }
+                    } while (choice != 0);
+                    system("cls");
+                }
+                // Update Book
+                else if (choice == 2)
+                {
+                    system("cls");
+                    UpdateBookByID();
+                    DisplayBackToMenuBanner();
+                    do
+                    {
+                        cin >> choice;
+
+                        if (choice != 0)
+                        {
+                            cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
+                        }
+                    } while (choice != 0);
+                    system("cls");
+                }
+                // Display Sales Report
+                else if (choice == 3)
+                {
+                    system("cls");
+                    DisplaySalesReport();
+                    DisplayBackToMenuBannerSalesReport();
+                    do
+                    {
+                        cin >> choice;
+
+                        if (choice != 0 && choice != 1)
+                        {
+                            cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
+                        }
+
+                        if (choice == 1)
+                        {
+                            system("cls");
+                            GenerateSalesReport();
+                            DisplayBackToMenuBanner();
+                            do
+                            {
+                                cin >> choice;
+
+                                if (choice != 0)
+                                {
+                                    cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
+                                }
+                            } while (choice != 0);
+                        }
+
+                    } while (choice != 0 && choice != 1);
+                    system("cls");
+                }
+                // InventoryStatus
+                else if (choice == 4)
+                {
+                    system("cls");
+                    DisplayInventoryStatus();
+                    DisplayBackToMenuBanner();
+                    do
+                    {
+                        cin >> choice;
+
+                        if (choice != 0)
+                        {
+                            cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
+                        }
+                    } while (choice != 0);
+                    system("cls");
+                }
+                // Notifications
+                else if (choice == 5)
+                {
+                    system("cls");
+                    DisplayNotifications();
+                    DisplayBackToMenuBanner();
+                    do
+                    {
+                        cin >> choice;
+
+                        if (choice != 0)
+                        {
+                            cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
+                        }
+                    } while (choice != 0);
+                    system("cls");
+                }
+                // Supplier List
+                else if (choice == 6)
+                {
+                    system("cls");
+                    DisplaySupplierList();
+                    DisplayBackToMenuBanner();
+                    do
+                    {
+                        cin >> choice;
+
+                        if (choice != 0)
+                        {
+                            cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
+                        }
+                    } while (choice != 0);
+                    system("cls");
+                }
+                else if (choice == 7)
+                {
+                    system("cls");
+                    DisplayTransactions();
+                    DisplayBackToMenuBanner();
+                    do
+                    {
+                        cin >> choice;
+
+                        if (choice != 0)
+                        {
+                            cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
+                        }
+                    } while (choice != 0);
+                    system("cls");
+                }
+                else if (choice == 8)
+                {
+                    system("cls");
+                    DisplayAddAdmin();
+                    AddAdmin();
+                    DisplayBackToMenuBanner();
+                    do
+                    {
+                        cin >> choice;
+
+                        if (choice != 0)
+                        {
+                            cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
+                        }
+                    } while (choice != 0);
+                    system("cls");
+                }
+                // Reset Password
+                else if (choice == 9)
+                {
+                    system("cls");
+                    DisplayResetPassword();
+                    ResetPassword(currentUser);
+                    DisplayBackToMenuBanner();
+                    do
+                    {
+                        cin >> choice;
+
+                        if (choice != 0)
+                        {
+                            cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
+                        }
+                    } while (choice != 0);
+                    system("cls");
+                }
+                // Add Supplier
+                else if (choice == 10)
+                {
+                    system("cls");
+                    DisplayAddSupplier();
+                    AddSupplier();
+                    DisplayBackToMenuBanner();
+                    do
+                    {
+                        cin >> choice;
+
+                        if (choice != 0)
+                        {
+                            cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
+                        }
+                    } while (choice != 0);
+                    system("cls");
+                }
+                // Log out
+                else if (choice == 11)
+                {
+                    isLogin = false;
+                    DisplayLoading();
+                    DisplayLogoutSuccessfulBanner();
+                    sleep(1);
+                    break;
+                }
             }
-            // Add Book
-            else if (choice == 1)
+            else if (strcmp(currentUser.role, USER_ROLE) == 0)
             {
-                AddBook();
-                DisplayBackToMenuBanner();
+                DisplayUserMenu();
+
                 do
                 {
+                    cout << "Please enter your choice (0, 1, or 2): ";
                     cin >> choice;
 
-                    if (choice != 0)
+                    if (choice != 0 && choice != 1 && choice != 2)
                     {
-                        cout << "Invalid choice. Please try again." << endl;
+                        cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
                     }
-                } while (choice != 0);
-                system("cls");
-            }
-            // Update Book
-            else if (choice == 2)
-            {
-                system("cls");
-                UpdateBookByID();
-                DisplayBackToMenuBanner();
-                do
+                } while (choice != 0 && choice != 1 && choice != 2);
+
+                // Buy Book
+                if (choice == 0)
                 {
-                    cin >> choice;
+                    bool isBookBought = false;
+                    system("cls");
+                    DisplayBooksUser();
+                    DisplayOptionMenuUserBookList();
 
-                    if (choice != 0)
+                    do
                     {
-                        cout << "Invalid choice. Please try again." << endl;
-                    }
-                } while (choice != 0);
-                system("cls");
-            }
-            // Display Sales Report
-            else if (choice == 3)
-            {
-                system("cls");
-                DisplaySalesReport();
-                DisplayBackToMenuBannerSalesReport();
-                do
-                {
-                    cin >> choice;
+                        cout << "Please enter your choice (0 or 1): ";
+                        cin >> choice;
 
-                    if (choice != 0 && choice != 1)
-                    {
-                        cout << "Invalid choice. Please try again." << endl;
-                    }
+                        if (choice != 0 && choice != 1)
+                        {
+                            cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
+                        }
+                    } while (choice != 0 && choice != 1);
+                    cout << endl
+                         << endl;
 
                     if (choice == 1)
                     {
-                        system("cls");
-                        GenerateSalesReport();
+                        do
+                        {
+                            isBookBought = BuyBook(currentUser);
+                        } while (!isBookBought);
+                        cout << endl
+                             << endl;
                         DisplayBackToMenuBanner();
                         do
                         {
@@ -206,110 +517,95 @@ main()
 
                             if (choice != 0)
                             {
-                                cout << "Invalid choice. Please try again." << endl;
+                                cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
                             }
                         } while (choice != 0);
+                        system("cls");
                     }
-
-                } while (choice != 0 && choice != 1);
-                system("cls");
-            }
-            //InventoryStatus
-            else if (choice == 4)
-            {
-                system("cls");
-                DisplayInventoryStatus();
-                DisplayBackToMenuBanner();
-                do
+                }
+                // Reset Password
+                else if (choice == 1)
                 {
-                    cin >> choice;
-
-                    if (choice != 0)
+                    system("cls");
+                    DisplayResetPassword();
+                    ResetPassword(currentUser);
+                    DisplayBackToMenuBanner();
+                    do
                     {
-                        cout << "Invalid choice. Please try again." << endl;
-                    }
-                } while (choice != 0);
-                system("cls");
-            }
-            //Notifications
-            else if (choice == 5)
-            {
-                system("cls");
-                DisplayNotifications();
-                DisplayBackToMenuBanner();
-                do
+                        cin >> choice;
+
+                        if (choice != 0)
+                        {
+                            cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
+                        }
+                    } while (choice != 0);
+                    system("cls");
+                }
+                // Logout
+                else if (choice == 2)
                 {
-                    cin >> choice;
-
-                    if (choice != 0)
-                    {
-                        cout << "Invalid choice. Please try again." << endl;
-                    }
-                } while (choice != 0);
-                system("cls");
-            }
-			// Supplier List
-            else if (choice == 6)
-            {
-                system("cls");
-                DisplaySupplierList();
-                DisplayBackToMenuBanner();
-                do
-                {
-                    cin >> choice;
-
-                    if (choice != 0)
-                    {
-                        cout << "Invalid choice. Please try again." << endl;
-                    }
-                } while (choice != 0);
-                system("cls");
-            }
-            // Log out
-            else if (choice == 7)
-            {
-                isLogin = false;
-                DisplayLoading();
-                DisplayLogoutSuccessfulBanner();
-                sleep(1);
-                break;
+                    isLogin = false;
+                    DisplayLoading();
+                    DisplayLogoutSuccessfulBanner();
+                    sleep(1);
+                    break;
+                }
             }
         }
     }
 }
 
-
-bool Login(char email[50], char password[50])
-{
-	struct User users[100];
-	int i=0,j=0;
-	
-	i = ReadUsersData(users,i);
-	
-	for(j=0;j<i;j++)
-	{
-		if(strcmp(users[j].email,email)==0&&strcmp(users[j].password,password)==0)
-		{
-			return true;
-		}
-		
-	}
-	return false;
-}
-
 void DisplayLogin()
 {
-	 cout << "======================================================================" << endl;
+    cout << "======================================================================" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "||                                                                  ||" << endl;
-    cout << "||                          L o g i n !                             ||" << endl;
+    cout << "||                          L O G I N !                             ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "======================================================================" << endl;
 }
 
+void DisplaySignUp()
+{
+    cout << "======================================================================" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                         S I G N   U P                            ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "======================================================================" << endl;
+}
+
+void DisplayForgetPassword()
+{
+    cout << "======================================================================" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                  F O R G E T   P A S S W O R D                   ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "======================================================================" << endl;
+}
+
+void DisplayResetPassword()
+{
+    cout << "======================================================================" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                  R E S E T   P A S S W O R D                     ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "======================================================================" << endl;
+}
 
 void DisplayWelcomeBanner()
 {
@@ -324,13 +620,53 @@ void DisplayWelcomeBanner()
     cout << "======================================================================" << endl;
 }
 
+void DisplayAddAdmin()
+{
+    cout << "======================================================================" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                        A D D   A D M I N                         ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "======================================================================" << endl;
+}
+
+void DisplayAddSupplier()
+{
+    cout << "======================================================================" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                      A D D   S U P P L I E R                     ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "======================================================================" << endl;
+}
+
 void DisplayLoginSuccessfulBanner()
 {
     cout << "======================================================================" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "||                                                                  ||" << endl;
-    cout << "||                   L O G I N   S U C C E S S F U L                ||" << endl;
+    cout << "||                   " << GREEN_COLOR << "L O G I N   S U C C E S S F U L" << WHITE_COLOR << "                ||" << endl;
+    cout << "||                          W E L C O M E !                         ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "======================================================================" << endl;
+}
+
+void DisplaySignUpSuccessfulBanner()
+{
+    cout << "======================================================================" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                   " << GREEN_COLOR << "S I G N U P  S U C C E S S F U L" << WHITE_COLOR "               ||" << endl;
     cout << "||                          W E L C O M E !                         ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "||                                                                  ||" << endl;
@@ -344,7 +680,7 @@ void DisplayLogoutSuccessfulBanner()
     cout << "||                                                                  ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "||                                                                  ||" << endl;
-    cout << "||                   L O G O U T   S U C C E S S F U L              ||" << endl;
+    cout << "||                   " << GREEN_COLOR << "L O G O U T   S U C C E S S F U L" << WHITE_COLOR << "              ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "||                                                                  ||" << endl;
@@ -357,8 +693,8 @@ void DisplayProgramQuitBanner()
     cout << "||                                                                  ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "||                                                                  ||" << endl;
-    cout << "||               P R O G R A M   S U C C E S S F U L L Y            ||" << endl;
-    cout << "||                           Q U I T !                              ||" << endl;
+    cout << "||               " << GREEN_COLOR << "P R O G R A M   S U C C E S S F U L L Y" << WHITE_COLOR << "            ||" << endl;
+    cout << "||                           " << GREEN_COLOR << "Q U I T !" << WHITE_COLOR << "                              ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "||                                                                  ||" << endl;
@@ -390,7 +726,24 @@ void DisplayAdminMenu()
     cout << "||  [4] Inventory Status                                            ||" << endl;
     cout << "||  [5] Notifications                                               ||" << endl;
     cout << "||  [6] Suppliers List                                              ||" << endl;
-    cout << "||  [7] Logout Program                                              ||" << endl;
+    cout << "||  [7] Transactions Detail                                         ||" << endl;
+    cout << "||  [8] Add Admin                                                   ||" << endl;
+    cout << "||  [9] Reset Password                                              ||" << endl;
+    cout << "||  [10] Add Suppliers                                              ||" << endl;
+    cout << "||  [11] Logout Program                                             ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "======================================================================" << endl;
+}
+
+void DisplayUserMenu()
+{
+    cout << "=========================== USER MENU ================================" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||  [0] Buy Book                                                    ||" << endl;
+    cout << "||  [1] Reset Password                                              ||" << endl;
+    cout << "||  [2] Logout                                                      ||" << endl;
+    cout << "||                                                                  ||" << endl;
     cout << "||                                                                  ||" << endl;
     cout << "======================================================================" << endl;
 }
@@ -419,6 +772,18 @@ void DisplayBackToMenuBannerSalesReport()
     cout << "Enter your choice: ";
 }
 
+void DisplayOptionMenuUserBookList()
+{
+    cout << "\n";
+    cout << "=======================================================================" << endl;
+    cout << "||                                                                   ||" << endl;
+    cout << "||                Press 0 to go back to the menu                     ||" << endl;
+    cout << "||                Press 1 to buy book                                ||" << endl;
+    cout << "||                                                                   ||" << endl;
+    cout << "=======================================================================" << endl;
+    cout << "Enter your choice: ";
+}
+
 void DisplayLoading()
 {
     cout << endl
@@ -430,7 +795,345 @@ void DisplayLoading()
     system("cls");
 }
 
-void DisplayBooks()
+bool Login(char email[50], char password[50], User &currentUser)
+{
+    struct User users[100];
+    int i = 0;
+
+    i = ReadUsersData(users, i);
+
+    for (int j = 0; j < i; j++)
+    {
+
+        if (strcmp(users[j].email, email) == 0 && strcmp(users[j].password, password) == 0)
+        {
+            currentUser.id = users[j].id;
+            strcpy(currentUser.email, users[j].email);
+            strcpy(currentUser.password, users[j].password);
+            strcpy(currentUser.role, users[j].role);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool SignUp(char email[100], char password[100], User &currentUser)
+{
+
+    User users[MAX_ARRAY_SIZE];
+    int userCount = ReadUsersData(users, 0);
+    ifstream read;
+    read.open(USER_FILE);
+
+    for (int i = 0; i < userCount; i++)
+    {
+        if (strcmp(users[i].email, email) == 0)
+        {
+            cout << RED_COLOR << "Account with this email already exists. Try again." << WHITE_COLOR << endl;
+            return false;
+        }
+    }
+
+    int newId = GetLatestUserID() + 1;
+
+    currentUser.id = newId;
+    strcpy(currentUser.email, email);
+    strcpy(currentUser.password, password);
+    strcpy(currentUser.role, USER_ROLE);
+
+    ofstream write(USER_FILE, ios::app);
+
+    bool isFileEmpty = read.peek() == EOF;
+    read.close();
+
+    if (!isFileEmpty)
+    {
+        write << "\n";
+    }
+
+    write << currentUser.id << "\n"
+          << currentUser.email << "\n"
+          << currentUser.password << "\n"
+          << currentUser.role;
+
+    write.close();
+
+    return true;
+}
+
+void ForgetPassword()
+{
+    char email[100], newPassword[100], confirmPassword[100];
+    int count = 0;
+    bool found = false, isPassSame = false;
+
+    User users[MAX_ARRAY_SIZE];
+    count = ReadUsersData(users, 0);
+
+    do
+    {
+        cout << "Enter your email to reset password: ";
+        cin.ignore();
+        cin.getline(email, 100);
+
+        for (int i = 0; i < count; i++)
+        {
+            if (strcmp(users[i].email, email) == 0)
+            {
+                found = true;
+
+                do
+                {
+                    cout << "Enter your new password: ";
+                    cin.getline(newPassword, 100);
+
+                    cout << "Confirm your new password: ";
+                    cin.getline(confirmPassword, 100);
+
+                    if (strcmp(newPassword, confirmPassword) == 0)
+                    {
+                        strcpy(users[i].password, newPassword);
+                        isPassSame = true;
+                    }
+                    else
+                    {
+                        cout << RED_COLOR << "Passwords do not match. Please try again." << WHITE_COLOR << endl;
+                    }
+                } while (!isPassSame);
+
+                break;
+            }
+        }
+
+        if (!found)
+        {
+            cout << RED_COLOR << "No account found with that email. Please try again." << WHITE_COLOR
+                 << endl;
+        }
+
+    } while (!found);
+
+    ofstream write;
+    write.open(USER_FILE, ios::out);
+
+    for (int i = 0; i < count; i++)
+    {
+        if (i != 0)
+        {
+            write << "\n";
+        }
+
+        write << users[i].id << "\n"
+              << users[i].email << "\n"
+              << users[i].password << "\n"
+              << users[i].role;
+    }
+
+    write.close();
+    cout << "Loading..." << endl;
+    sleep(1);
+    cout << GREEN_COLOR << "Password reset successfully!" << WHITE_COLOR << endl;
+}
+
+void ResetPassword(User currentUser)
+{
+    char newPassword[100], confirmPassword[100];
+    bool isPassSame = false;
+
+    User users[MAX_ARRAY_SIZE];
+    int count = ReadUsersData(users, 0);
+
+    cin.ignore();
+
+    do
+    {
+        do
+        {
+            cout << "Enter your new password: ";
+
+            cin.getline(newPassword, 100);
+
+            if (newPassword[0] == '\0')
+            {
+                cout << RED_COLOR << "Password cannot be empty" << WHITE_COLOR << endl;
+            }
+
+        } while (newPassword[0] == '\0');
+
+        cout << "Confirm your new password: ";
+        cin.getline(confirmPassword, 100);
+
+        if (strcmp(newPassword, confirmPassword) == 0)
+        {
+            isPassSame = true;
+        }
+        else
+        {
+            cout << RED_COLOR << "Passwords do not match. Please try again." << WHITE_COLOR
+                 << endl;
+        }
+
+    } while (!isPassSame);
+
+    for (int i = 0; i < count; i++)
+    {
+        if (users[i].id == currentUser.id)
+        {
+            strcpy(users[i].password, newPassword);
+            break;
+        }
+    }
+
+    ofstream write;
+    write.open(USER_FILE, ios::out);
+
+    for (int i = 0; i < count; i++)
+    {
+        if (i != 0)
+        {
+            write << "\n";
+        }
+
+        write << users[i].id << "\n"
+              << users[i].email << "\n"
+              << users[i].password << "\n"
+              << users[i].role;
+    }
+
+    write.close();
+
+    cout << "Loading..." << endl;
+    sleep(1);
+    cout << GREEN_COLOR << "Password has been reset successfully!" << WHITE_COLOR << endl;
+}
+
+void AddAdmin()
+{
+    char email[100];
+    bool exists = false;
+    int count = 0;
+
+    User users[MAX_ARRAY_SIZE];
+    count = ReadUsersData(users, 0);
+
+    cin.ignore();
+    do
+    {
+        exists = false;
+        do
+        {
+
+            cout << "Enter new admin email: ";
+            cin.getline(email, 100);
+            if (email[0] == '\0')
+            {
+                cout << RED_COLOR << "Email cannot be empty." << WHITE_COLOR << endl;
+            }
+
+        } while (email[0] == '\0');
+
+        for (int i = 0; i < count; i++)
+        {
+            if (strcmp(users[i].email, email) == 0)
+            {
+                exists = true;
+                break;
+            }
+        }
+
+        if (exists)
+        {
+            cout << RED_COLOR << "An account with this email already exists!" << WHITE_COLOR << endl;
+        }
+    } while (exists);
+
+    int newId = GetLatestUserID() + 1;
+    User newUser;
+    newUser.id = newId;
+    strcpy(newUser.email, email);
+    strcpy(newUser.password, DEFAULT_PASSWORD);
+    strcpy(newUser.role, ADMIN_ROLE);
+
+    ofstream write;
+    write.open(USER_FILE, ios::app);
+
+    write << "\n"
+          << newUser.id << "\n"
+          << newUser.email << "\n"
+          << newUser.password << "\n"
+          << newUser.role;
+
+    write.close();
+
+    cout << "Loading..." << endl;
+    sleep(1);
+    cout << GREEN_COLOR << "Admin account created successfully with default password - " << DEFAULT_PASSWORD << WHITE_COLOR << endl;
+}
+
+void AddSupplier()
+{
+    char email[100];
+    bool exists = false;
+    int count = 0;
+
+    User users[MAX_ARRAY_SIZE];
+    count = ReadUsersData(users, 0);
+
+    cin.ignore();
+    do
+    {
+        exists = false;
+        do
+        {
+
+            cout << "Enter new supplier email: ";
+            cin.getline(email, 100);
+            if (email[0] == '\0')
+            {
+                cout << RED_COLOR << "Email cannot be empty." << WHITE_COLOR << endl;
+            }
+
+        } while (email[0] == '\0');
+
+        for (int i = 0; i < count; i++)
+        {
+            if (strcmp(users[i].email, email) == 0)
+            {
+                exists = true;
+                break;
+            }
+        }
+
+        if (exists)
+        {
+            cout << RED_COLOR << "An account with this email already exists!" << WHITE_COLOR << endl;
+        }
+    } while (exists);
+
+    int newId = GetLatestUserID() + 1;
+    User newUser;
+    newUser.id = newId;
+    strcpy(newUser.email, email);
+    strcpy(newUser.password, DEFAULT_PASSWORD);
+    strcpy(newUser.role, SUPPLIER_ROLE);
+
+    ofstream write;
+    write.open(USER_FILE, ios::app);
+
+    write << "\n"
+          << newUser.id << "\n"
+          << newUser.email << "\n"
+          << newUser.password << "\n"
+          << newUser.role;
+
+    write.close();
+
+    cout << "Loading..." << endl;
+    sleep(1);
+    cout << GREEN_COLOR << "Supplier account created successfully with default password - " << DEFAULT_PASSWORD << WHITE_COLOR << endl;
+}
+
+void DisplayBooksAdmin()
 {
     struct Book books[MAX_ARRAY_SIZE];
     int i = 0;
@@ -467,6 +1170,38 @@ void DisplayBooks()
          << endl;
 }
 
+void DisplayBooksUser()
+{
+    struct Book books[MAX_ARRAY_SIZE];
+    int i = 0;
+    DisplayLoading();
+
+    i = ReadBooksData(books, i);
+
+    cout << "======================================== BOOK LIST =========================================" << endl;
+    cout << "--------------------------------------------------------------------------------------------" << endl;
+    cout
+        << setw(6) << "ID"
+        << setw(25) << "Title"
+        << setw(20) << "Author"
+        << setw(12) << "Stock Left"
+        << setw(15) << "Price(RM)" << endl;
+    cout << "--------------------------------------------------------------------------------------------" << endl;
+
+    for (int j = 0; j < i; j++)
+    {
+        cout
+            << setw(6) << books[j].id
+            << setw(25) << books[j].title
+            << setw(20) << books[j].author
+            << setw(12) << books[j].stockQuantity - books[j].quantitySold
+            << setw(15) << fixed << setprecision(2) << books[j].price << endl;
+    }
+
+    cout << "--------------------------------------------------------------------------------------------" << endl
+         << endl;
+}
+
 void AddBook()
 {
     ofstream write;
@@ -489,7 +1224,7 @@ void AddBook()
         cin.getline(book.title, 100);
         if (book.title[0] == '\0')
         {
-            cout << "Title cannot be empty." << endl;
+            cout << RED_COLOR << "Title cannot be empty." << WHITE_COLOR << endl;
         }
     } while (book.title[0] == '\0');
 
@@ -499,7 +1234,7 @@ void AddBook()
         cin.getline(book.author, 100);
         if (book.author[0] == '\0')
         {
-            cout << "Author name cannot be empty." << endl;
+            cout << RED_COLOR << "Author name cannot be empty." << WHITE_COLOR << endl;
         }
     } while (book.author[0] == '\0');
 
@@ -509,7 +1244,7 @@ void AddBook()
         cin >> book.stockQuantity;
         if (book.stockQuantity < 1)
         {
-            cout << "Invalid input. Please enter a non-negative integer for quantity." << endl;
+            cout << RED_COLOR << "Invalid input. Please enter a non-negative integer for quantity." << WHITE_COLOR << endl;
         }
     } while (book.stockQuantity < 1);
 
@@ -519,7 +1254,7 @@ void AddBook()
         cin >> book.price;
         if (book.price < 1)
         {
-            cout << "Invalid input. Please enter a non-negative number for price." << endl;
+            cout << RED_COLOR << "Invalid input. Please enter a non-negative number for price." << WHITE_COLOR << endl;
         }
     } while (book.price < 1);
 
@@ -530,7 +1265,7 @@ void AddBook()
 
         if (!IsSupplierIdExists(users, i, book.supplierId))
         {
-            cout << "Supplier ID does not exist. Please try again." << endl;
+            cout << RED_COLOR << "Supplier ID does not exist. Please try again." << WHITE_COLOR << endl;
         }
 
     } while (!IsSupplierIdExists(users, i, book.supplierId));
@@ -539,7 +1274,7 @@ void AddBook()
     write.open(BOOK_FILE, ios::app);
 
     bool isFileEmpty = read.peek() == EOF;
-
+    read.close();
     if (!isFileEmpty)
     {
         write << "\n";
@@ -554,21 +1289,23 @@ void AddBook()
 
     write.close();
 
-    cout << "Book added successfully!" << endl;
+    cout << "Adding Book...." << endl;
+    sleep(1);
+    cout << GREEN_COLOR << "Book added successfully!" << WHITE_COLOR << endl;
 }
 
 void UpdateBookByID()
 {
     struct Book books[MAX_ARRAY_SIZE];
     struct User users[MAX_ARRAY_SIZE];
-    int count = 0, targetId, j=0;
+    int count = 0, targetId, j = 0;
     bool found = false;
 
     cout << "============================= UPDATE BOOK ===============================" << endl;
 
     count = ReadBooksData(books, count);
-	j = ReadUsersData(users, j);
-	
+    j = ReadUsersData(users, j);
+
     cout << "Enter the Book ID to update: ";
     cin >> targetId;
 
@@ -596,7 +1333,7 @@ void UpdateBookByID()
                 cin.getline(books[i].title, 100);
                 if (books[i].title[0] == '\0')
                 {
-                    cout << "Title cannot be empty." << endl;
+                    cout << RED_COLOR << "Title cannot be empty." << WHITE_COLOR << endl;
                 }
             } while (books[i].title[0] == '\0');
 
@@ -606,7 +1343,7 @@ void UpdateBookByID()
                 cin.getline(books[i].author, 100);
                 if (books[i].author[0] == '\0')
                 {
-                    cout << "Author name cannot be empty." << endl;
+                    cout << RED_COLOR << "Author name cannot be empty." << WHITE_COLOR << endl;
                 }
             } while (books[i].author[0] == '\0');
 
@@ -616,7 +1353,7 @@ void UpdateBookByID()
                 cin >> books[i].stockQuantity;
                 if (books[i].stockQuantity < 1)
                 {
-                    cout << "Invalid input. Please enter a non-negative integer for quantity." << endl;
+                    cout << RED_COLOR << "Invalid input. Please enter a non-negative integer for quantity." << WHITE_COLOR << endl;
                 }
             } while (books[i].stockQuantity < 1);
 
@@ -626,21 +1363,21 @@ void UpdateBookByID()
                 cin >> books[i].price;
                 if (books[i].price < 1)
                 {
-                    cout << "Invalid input. Please enter a non-negative number for price." << endl;
+                    cout << RED_COLOR << "Invalid input. Please enter a non-negative number for price." << WHITE_COLOR << endl;
                 }
             } while (books[i].price < 1);
-            
-             do
-    {
-        cout << "Enter supplier Id: ";
-        cin >> books[i].supplierId;
 
-        if (!IsSupplierIdExists(users, j, books[i].supplierId))
-        {
-            cout << "Supplier ID does not exist. Please try again." << endl;
-        }
+            do
+            {
+                cout << "Enter supplier Id: ";
+                cin >> books[i].supplierId;
 
-    } while (!IsSupplierIdExists(users, j, books[i].supplierId));
+                if (!IsSupplierIdExists(users, j, books[i].supplierId))
+                {
+                    cout << RED_COLOR << "Supplier ID does not exist. Please try again." << WHITE_COLOR << endl;
+                }
+
+            } while (!IsSupplierIdExists(users, j, books[i].supplierId));
 
             break;
         }
@@ -648,7 +1385,7 @@ void UpdateBookByID()
 
     if (!found)
     {
-        cout << "Book with ID " << targetId << " not found." << endl;
+        cout << RED_COLOR << "Book with ID " << targetId << " not found." << WHITE_COLOR << endl;
         return;
     }
 
@@ -668,20 +1405,141 @@ void UpdateBookByID()
               << books[i].stockQuantity << "\n"
               << books[i].quantitySold << "\n"
               << books[i].price << "\n"
-			  << books[i].supplierId;
+              << books[i].supplierId;
     }
     write.close();
 
-    cout << "Book updated successfully!" << endl;
+    cout << "Updating Book..." << endl;
+    sleep(1);
+    cout << GREEN_COLOR << "Book updated successfully!" << WHITE_COLOR << endl;
+}
+
+bool BuyBook(User currentUser)
+{
+    struct Book books[MAX_ARRAY_SIZE];
+    struct User users[MAX_ARRAY_SIZE];
+    int count = 0, targetId, quantity;
+    bool found = false;
+    ifstream read;
+    read.open(TRANSACTION_FILE);
+
+    cout << "============================= BUY BOOK ===============================" << endl;
+
+    count = ReadBooksData(books, count);
+
+    cout << "Enter the Book ID to buy: ";
+    cin >> targetId;
+
+    for (int i = 0; i < count; i++)
+    {
+        if (books[i].id == targetId)
+        {
+            int stockLeft = books[i].stockQuantity - books[i].quantitySold;
+            found = true;
+            cout << "\n=========================== CURRENT BOOK INFO ===========================" << endl;
+            cout << left;
+            cout << setw(24) << "ID" << ": " << setw(20) << books[i].id << endl;
+            cout << setw(24) << "Title" << ": " << setw(20) << books[i].title << endl;
+            cout << setw(24) << "Author" << ": " << setw(20) << books[i].author << endl;
+            cout << setw(24) << "Stock Left" << ": " << setw(20) << stockLeft << endl;
+            cout << setw(24) << "Price" << ": " << setw(20) << fixed << setprecision(2) << books[i].price << endl;
+            cout << "==========================================================================" << endl
+                 << endl;
+
+            do
+            {
+                cout << "Enter book quantity to buy : ";
+                cin >> quantity;
+
+                if (quantity < 1 || quantity > stockLeft)
+                {
+                    cout << RED_COLOR << "Invalid Quantity. Try again." << WHITE_COLOR << endl;
+                }
+            } while (quantity < 1 || quantity > stockLeft);
+
+            ofstream writeTrans;
+            writeTrans.open(TRANSACTION_FILE, ios::app);
+
+            bool isFileEmpty = read.peek() == EOF;
+            read.close();
+
+            if (!isFileEmpty)
+            {
+                writeTrans << "\n";
+            }
+
+            int transactionId = GetLatestTransactionID();
+
+            if (transactionId < 0)
+            {
+                cout << RED_COLOR << "Something went wrong!!" << WHITE_COLOR << endl;
+                return false;
+            }
+
+            transactionId += 1;
+
+            books[i].quantitySold = books[i].quantitySold + quantity;
+
+            writeTrans << transactionId << "\n"
+                       << currentUser.id << "\n"
+                       << books[i].id << "\n"
+                       << quantity << "\n"
+                       << currentUser.email << "\n"
+                       << books[i].title << "\n"
+                       << books[i].price;
+
+            writeTrans.close();
+
+            ofstream writeBook;
+            writeBook.open(BOOK_FILE, ios::out);
+
+            for (int i = 0; i < count; i++)
+            {
+                if (i != 0)
+                {
+                    writeBook << "\n";
+                }
+
+                writeBook << books[i].id << "\n"
+                          << books[i].title << "\n"
+                          << books[i].author << "\n"
+                          << books[i].stockQuantity << "\n"
+                          << books[i].quantitySold << "\n"
+                          << books[i].price << "\n"
+                          << books[i].supplierId;
+            }
+            writeBook.close();
+
+            cout << "Loading..." << endl;
+            sleep(1);
+            cout << GREEN_COLOR << "Book bought successfully!" << WHITE_COLOR << endl;
+
+            break;
+        }
+    }
+
+    if (!found)
+    {
+        cout << RED_COLOR << "Book with ID " << targetId << " not found. Tray again." << WHITE_COLOR << endl;
+        return false;
+    }
+
+    return found;
 }
 
 int GetLatestBookID()
 {
     ifstream read(BOOK_FILE);
-    Book book;
+    struct Book book;
     int latestId = 0;
 
-    while (read >> book.id)
+    if (read.fail())
+    {
+        cout << RED_COLOR << "Error opening " << BOOK_FILE << " file." << WHITE_COLOR << endl;
+        return -1;
+    }
+
+    while (!read.eof())
     {
         read.ignore();
         read.getline(book.title, 100);
@@ -698,6 +1556,62 @@ int GetLatestBookID()
     return latestId;
 }
 
+int GetLatestUserID()
+{
+    ifstream read(USER_FILE);
+    struct User user;
+    int latestId = 0;
+
+    if (read.fail())
+    {
+        cout << RED_COLOR << "Error opening " << USER_FILE << " file." << WHITE_COLOR << endl;
+        return 0;
+    }
+
+    while (!read.eof())
+    {
+        read >> user.id;
+        read.ignore();
+        read.getline(user.email, 100);
+        read.getline(user.password, 100);
+        read.getline(user.role, 50);
+        latestId = user.id;
+    }
+
+    read.close();
+    return latestId;
+}
+
+int GetLatestTransactionID()
+{
+    ifstream read(TRANSACTION_FILE);
+    Transaction transaction;
+    int latestId = 0;
+
+    if (read.fail())
+    {
+        cout << RED_COLOR << "Error opening " << TRANSACTION_FILE << "." << WHITE_COLOR << endl;
+        return -1;
+    }
+
+    while (!read.eof())
+    {
+        read >> transaction.id;
+        read >> transaction.userId;
+        read >> transaction.bookId;
+        read >> transaction.quantity;
+        read.ignore();
+        read.getline(transaction.email, 100);
+        read.getline(transaction.bookTitle, 100);
+        read >> transaction.bookPrice;
+        read.ignore();
+        latestId = transaction.id;
+    }
+
+    read.close();
+    return latestId;
+}
+
 int ReadBooksData(Book books[], int i)
 {
     ifstream read;
@@ -706,7 +1620,7 @@ int ReadBooksData(Book books[], int i)
 
     if (read.fail())
     {
-        cout << "Error opening books file." << endl;
+        cout << RED_COLOR << "Error opening " << BOOK_FILE << " file." << WHITE_COLOR << endl;
         return 0;
     }
 
@@ -732,17 +1646,17 @@ int ReadBooksData(Book books[], int i)
 int ReadUsersData(User users[], int i)
 {
     ifstream read;
-
     read.open(USER_FILE);
 
     if (read.fail())
     {
-        cout << "Error opening users file." << endl;
+        cout << RED_COLOR << "Error opening " << USER_FILE << "." << WHITE_COLOR << endl;
         return 0;
     }
 
-    while (read >> users[i].id)
+    while (!read.eof())
     {
+        read >> users[i].id;
         read.ignore();
         read.getline(users[i].email, 100);
         read.getline(users[i].password, 100);
@@ -751,7 +1665,45 @@ int ReadUsersData(User users[], int i)
     }
 
     read.close();
+    return i;
+}
 
+int ReadTransactionData(Transaction transactions[], int i)
+{
+    ifstream read;
+
+    read.open(TRANSACTION_FILE);
+
+    if (read.fail())
+    {
+        cout << RED_COLOR "Error opening " << TRANSACTION_FILE << "." << WHITE_COLOR << endl;
+        return 0;
+    }
+
+    while (!read.eof())
+    {
+        read >> transactions[i].id;
+        read.ignore();
+
+        read >> transactions[i].userId;
+        read.ignore();
+
+        read >> transactions[i].bookId;
+        read.ignore();
+
+        read >> transactions[i].quantity;
+        read.ignore();
+
+        read.getline(transactions[i].email, 100);
+        read.getline(transactions[i].bookTitle, 100);
+
+        read >> transactions[i].bookPrice;
+        read.ignore();
+
+        i++;
+    }
+
+    read.close();
     return i;
 }
 
@@ -881,13 +1833,8 @@ void GenerateSalesReport()
 
     i = ReadBooksData(books, i);
 
-    ofstream write(SALE_REPORT_FILE, ios::out);
-
-    if (write.fail())
-    {
-        cout << "Error writing to sales report file." << endl;
-        return;
-    }
+    ofstream write;
+    write.open(SALE_REPORT_FILE, ios::out);
 
     write << "================================ SALES REPORT ====================================" << endl;
     write << setw(10) << "Book ID"
@@ -951,7 +1898,7 @@ void GenerateSalesReport()
 
     cout << endl
          << endl
-         << "Sales report generated successfully!" << endl
+         << GREEN_COLOR << "Sales report generated successfully!" << WHITE_COLOR << endl
          << endl;
 
     cout << "Report can be viewed in: " << SALE_REPORT_FILE << endl
@@ -1030,19 +1977,19 @@ void DisplayNotifications()
         {
             strcpy(books[j].status, "Out of Stock");
             cout << "--------------------------------------------------------------" << endl;
-            cout << RED_COLOR << books[j].title << " is out of stock, need to reorder." << WHITE_COLOR <<endl;
+            cout << RED_COLOR << books[j].title << " is out of stock, need to reorder." << WHITE_COLOR << endl;
         }
         else if (leftQty <= 5)
         {
             strcpy(books[j].status, "Low Stock");
             cout << "--------------------------------------------------------------" << endl;
-            cout << YELLOW_COLOR << books[j].title << " is low stock, only left " << leftQty << "." <<  WHITE_COLOR<<endl;
+            cout << YELLOW_COLOR << books[j].title << " is low stock, only left " << leftQty << "." << WHITE_COLOR << endl;
         }
     }
 
-    cout << "--------------------------------------------------------------" << endl << endl;
+    cout << "--------------------------------------------------------------" << endl
+         << endl;
 }
-
 
 void DisplaySupplierList()
 {
@@ -1067,5 +2014,43 @@ void DisplaySupplierList()
     }
 
     cout << "------------------------------------------------" << endl
+         << endl;
+}
+
+void DisplayTransactions()
+{
+    Transaction transactions[MAX_ARRAY_SIZE];
+    int count = ReadTransactionData(transactions, 0);
+
+    DisplayLoading();
+
+    cout << "========================================== TRANSACTION LIST ========================================" << endl;
+    cout << "----------------------------------------------------------------------------------------------------" << endl;
+    cout
+        << setw(6) << "ID"
+        << setw(10) << "UserID"
+        << setw(30) << "Email"
+        << setw(10) << "BookID"
+        << setw(10) << "Qty"
+        << setw(15) << "Price"
+        << setw(15) << "Total" << endl;
+    cout << "----------------------------------------------------------------------------------------------------" << endl;
+
+    for (int i = 0; i < count; i++)
+    {
+        double total = transactions[i].quantity * transactions[i].bookPrice;
+
+        cout
+            << setw(6) << transactions[i].id
+            << setw(10) << transactions[i].userId
+            << setw(30) << transactions[i].email
+            << setw(10) << transactions[i].bookId
+            << setw(10) << transactions[i].quantity
+            << setw(15) << fixed << setprecision(2) << transactions[i].bookPrice
+            << setw(15) << fixed << setprecision(2) << total << endl;
+    }
+
+    cout << "----------------------------------------------------------------------------------------------------" << endl
+         << endl
          << endl;
 }
