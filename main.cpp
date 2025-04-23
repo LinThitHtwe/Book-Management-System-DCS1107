@@ -255,6 +255,7 @@ main()
 
         while (isLogin || isSignUp)
         {
+            // If the user role is admin
             if (strcmp(currentUser.role, ADMIN_ROLE) == 0)
             {
 
@@ -1364,7 +1365,6 @@ void AddBook()
     i = ReadUsersData(users, i);
 
     cout << "============================= ADD BOOK ===============================" << endl;
-
     book.id = GetLatestBookID() + 1;
 
     do
@@ -1435,7 +1435,8 @@ void AddBook()
           << book.author << "\n"
           << book.stockQuantity << "\n"
           << book.quantitySold << "\n"
-          << book.price;
+          << book.price << "\n"
+          << book.supplierId;
 
     write.close();
 
@@ -1473,6 +1474,7 @@ void UpdateBookByID()
             cout << setw(24) << "Sold Quantity" << ": " << setw(20) << books[i].quantitySold << endl;
             cout << setw(24) << "Stock Left" << ": " << setw(20) << (books[i].stockQuantity - books[i].quantitySold) << endl;
             cout << setw(24) << "Price" << ": " << setw(20) << fixed << setprecision(2) << books[i].price << endl;
+            cout << setw(24) << "SupplierId" << ": " << setw(20) << fixed << setprecision(2) << books[i].supplierId << endl;
             cout << "==========================================================================" << endl
                  << endl;
 
@@ -1684,57 +1686,61 @@ int GetLatestSupplierNotiId()
     SupplierNotification supNoti;
     int latestId = 0;
 
-    if (read.peek() == EOF)
-    {
-        return 1;
-    }
-
-    if (read.fail())
+    if (!read)
     {
         cout << RED_COLOR << "Error opening " << SUPPLIER_NOTI_FILE << " file." << WHITE_COLOR << endl;
         return -1;
     }
 
+    if (read.peek() == EOF)
+    {
+        return 1;
+    }
+
     while (!read.eof())
     {
+        read >> supNoti.id;
         read >> supNoti.supplierId;
         read >> supNoti.bookId;
         read >> supNoti.stockLeft;
         read.ignore();
         read.getline(supNoti.bookTitle, 100);
+
+        if (read.fail())
+        {
+            break;
+        }
+
         latestId = supNoti.id + 1;
     }
-    read.close();
 
+    read.close();
     return latestId;
 }
 
 int GetLatestBookID()
 {
     ifstream read(BOOK_FILE);
-    struct Book book;
+    Book book;
     int latestId = 0;
-
-    if (read.fail())
-    {
-        cout << RED_COLOR << "Error opening " << BOOK_FILE << " file." << WHITE_COLOR << endl;
-        return -1;
-    }
-
-    if (read.peek() == EOF)
-    {
-        return 1;
-    }
 
     while (!read.eof())
     {
+        read >> book.id;
         read.ignore();
+
         read.getline(book.title, 100);
         read.getline(book.author, 100);
         read >> book.stockQuantity;
         read >> book.quantitySold;
         read >> book.price;
         read >> book.supplierId;
+
+        if (read.fail())
+        {
+            break;
+        }
+
         read.ignore();
         latestId = book.id;
     }
@@ -1767,6 +1773,7 @@ int GetLatestUserID()
         read.getline(user.email, 100);
         read.getline(user.password, 100);
         read.getline(user.role, 50);
+
         latestId = user.id;
     }
 
@@ -2338,10 +2345,12 @@ void NotifySuppliersForLowStock()
     bookCount = ReadBooksData(books, bookCount);
 
     notiId = GetLatestSupplierNotiId();
-
+    bool isFileEmpty = false;
     ifstream read;
     read.open(SUPPLIER_NOTI_FILE);
 
+    isFileEmpty = read.peek() == EOF;
+    read.close();
     ofstream write;
     write.open(SUPPLIER_NOTI_FILE, ios::app);
 
@@ -2362,11 +2371,13 @@ void NotifySuppliersForLowStock()
                 noti.stockLeft = leftQty;
                 strcpy(noti.bookTitle, books[i].title);
 
-                bool isFileEmpty = read.peek() == EOF;
-
                 if (!isFileEmpty)
                 {
                     write << "\n";
+                }
+                else
+                {
+                    isFileEmpty = false;
                 }
 
                 write << noti.id << "\n"
