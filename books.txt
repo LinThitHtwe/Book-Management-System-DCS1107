@@ -1,70 +1,42 @@
 1
-WarUpdated
-Sun Tzu
-50
-50
-50
-1
-2
-CleanCode
-Robert Martin
-60
-55
-50
-1
+Clean Code
+Robert C. Martin
+10
 3
-Habits
-James Clear
-40
-35
-45
-1
-4
-Patterns
-Erich Gamma
-25
-5
-70
-1
-5
-Pragmatic
-Andrew Hunt
-30
+45.50
+9
 2
-65
-1
-6
-Algorithms
-Thomas Cormen
-45
-38
-80
-1
-7
 Refactor
 Martin Fowler
-35
-33
-55
-1
 8
-CodeComp
-Steve McConnell
-55
-50
-60
-1
-9
-JS Guide
-Kyle Simpson
-20
-3
-35
-1
+5
+50.00
 10
-Crack Intvw
-Gayle McDowell
-70
-65
-75
+3
+Algorithms
+Sedgewick
+15
+10
+60.00
+11
+4
+Design
+Erich Gamma
+5
+5
+55.00
+9
+5
+Patterns
+GoF
+12
+2
+35.75
+10
+6
+DB Basics
+C. J. Date
+6
 1
+40.25
+11

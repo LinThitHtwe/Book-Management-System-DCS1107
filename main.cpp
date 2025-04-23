@@ -10,6 +10,7 @@ using namespace std;
 #define USER_FILE "users.txt"
 #define TRANSACTION_FILE "transactions.txt"
 #define SALE_REPORT_FILE "sales_report.txt"
+#define SUPPLIER_NOTI_FILE "supplier_noti.txt"
 #define MAX_ARRAY_SIZE 100
 #define RED_COLOR "\033[31m"
 #define YELLOW_COLOR "\033[33m"
@@ -40,50 +41,68 @@ struct Transaction
     double bookPrice;
 };
 
+struct SupplierNotification
+{
+    int id, supplierId, bookId, stockLeft;
+    char bookTitle[100];
+};
+
 bool Login(char email[50], char password[50], User &currentUser);
 bool SignUp(char email[50], char password[50], User &currentUser);
-void DisplayLogin();
-void DisplayOptionMenuUserBookList();
+void ForgetPassword();
+void ResetPassword(User currentUser);
+int GetLatestUserID();
+int ReadUsersData(User users[], int i);
+
 void DisplayWelcomeBanner();
-void DisplayOptionsMenu();
+void DisplayLogin();
 void DisplayLoginSuccessfulBanner();
+void DisplaySignUp();
+void DisplaySignUpSuccessfulBanner();
+void DisplayForgetPassword();
+void DisplayResetPassword();
+void DisplayOptionMenuUserBookList();
+void DisplayOptionsMenu();
 void DisplayBackToMenuBanner();
 void DisplayProgramQuitBanner();
 void DisplayAdminMenu();
 void DisplayUserMenu();
+void DisplaySupplierMenu();
+void DisplayAddAdmin();
+void DisplayAddSupplier();
+void DisplayLogoutSuccessfulBanner();
+void DisplayBackToMenuBannerSalesReport();
+void DisplayBackToMenuInventoryStatus();
+void DisplayLoading();
+
 void AddBook();
+void UpdateBookByID();
 void DisplayBooksAdmin();
 void DisplayBooksUser();
-void DisplayLogoutSuccessfulBanner();
-void UpdateBookByID();
 int GetLatestBookID();
+int ReadBooksData(Book books[], int i);
+void BubbleSortBooks(Book books[], int size);
+
+bool BuyBook(User currentUser);
+void DisplayTransactions();
 void DisplaySalesReport();
 void GenerateSalesReport();
-void DisplayBackToMenuBannerSalesReport();
-void DisplayLoading();
-int ReadBooksData(Book books[], int i);
-int ReadUsersData(User users[], int i);
+int GetLatestTransactionID();
 int ReadTransactionData(Transaction transactions[], int i);
+
 void DisplayInventoryStatus();
-void BubbleSortBooks(Book books[], int size);
 bool IsSupplierIdExists(User users[], int userCount, int supplierId);
 int GetSupplierList(User suppliers[], int i);
 void DisplaySupplierList();
 void DisplayNotifications();
-void DisplayTransactions();
-bool BuyBook(User currentUser);
-int GetLatestUserID();
-int GetLatestTransactionID();
-void DisplaySignUp();
-void DisplaySignUpSuccessfulBanner();
-void DisplayForgetPassword();
-void ForgetPassword();
-void DisplayResetPassword();
-void ResetPassword(User currentUser);
-void DisplayAddAdmin();
-void DisplayAddSupplier();
+
 void AddAdmin();
 void AddSupplier();
+
+int GetSupplierNotificationsById(SupplierNotification notis[], int supplierId);
+void DisplaySupplierNotifications(int supplierId);
+void NotifySuppliersForLowStock();
+int GetLatestSupplierNotiId();
 
 main()
 {
@@ -341,16 +360,31 @@ main()
                 {
                     system("cls");
                     DisplayInventoryStatus();
-                    DisplayBackToMenuBanner();
+                    DisplayBackToMenuInventoryStatus();
                     do
                     {
                         cin >> choice;
 
-                        if (choice != 0)
+                        if (choice != 0 && choice != 1)
                         {
                             cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
                         }
-                    } while (choice != 0);
+                        if (choice == 1)
+                        {
+                            NotifySuppliersForLowStock();
+                            DisplayBackToMenuBanner();
+                            do
+                            {
+                                cin >> choice;
+
+                                if (choice != 0)
+                                {
+                                    cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
+                                }
+                            } while (choice != 0);
+                            system("cls");
+                        }
+                    } while (choice != 1 && choice != 0);
                     system("cls");
                 }
                 // Notifications
@@ -522,6 +556,66 @@ main()
                         } while (choice != 0);
                         system("cls");
                     }
+                }
+                // Reset Password
+                else if (choice == 1)
+                {
+                    system("cls");
+                    DisplayResetPassword();
+                    ResetPassword(currentUser);
+                    DisplayBackToMenuBanner();
+                    do
+                    {
+                        cin >> choice;
+
+                        if (choice != 0)
+                        {
+                            cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
+                        }
+                    } while (choice != 0);
+                    system("cls");
+                }
+                // Logout
+                else if (choice == 2)
+                {
+                    isLogin = false;
+                    DisplayLoading();
+                    DisplayLogoutSuccessfulBanner();
+                    sleep(1);
+                    break;
+                }
+            }
+            else if (strcmp(currentUser.role, SUPPLIER_ROLE) == 0)
+            {
+                DisplaySupplierMenu();
+                do
+                {
+                    cout << "Please enter your choice (0, 1, or 2): ";
+                    cin >> choice;
+
+                    if (choice != 0 && choice != 1 && choice != 2)
+                    {
+                        cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
+                    }
+                } while (choice != 0 && choice != 1 && choice != 2);
+
+                if (choice == 0)
+                {
+                    system("cls");
+                    DisplaySupplierNotifications(currentUser.id);
+                    cout << endl
+                         << endl;
+                    DisplayBackToMenuBanner();
+                    do
+                    {
+                        cin >> choice;
+
+                        if (choice != 0)
+                        {
+                            cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
+                        }
+                    } while (choice != 0);
+                    system("cls");
                 }
                 // Reset Password
                 else if (choice == 1)
@@ -748,6 +842,19 @@ void DisplayUserMenu()
     cout << "======================================================================" << endl;
 }
 
+void DisplaySupplierMenu()
+{
+    cout << "=========================== SUPPLIER MENU ============================" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||  [0] Notifications                                               ||" << endl;
+    cout << "||  [1] Reset Password                                              ||" << endl;
+    cout << "||  [2] Logout                                                      ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "||                                                                  ||" << endl;
+    cout << "======================================================================" << endl;
+}
+
 void DisplayBackToMenuBanner()
 {
     cout << endl;
@@ -779,6 +886,18 @@ void DisplayOptionMenuUserBookList()
     cout << "||                                                                   ||" << endl;
     cout << "||                Press 0 to go back to the menu                     ||" << endl;
     cout << "||                Press 1 to buy book                                ||" << endl;
+    cout << "||                                                                   ||" << endl;
+    cout << "=======================================================================" << endl;
+    cout << "Enter your choice: ";
+}
+
+void DisplayBackToMenuInventoryStatus()
+{
+    cout << "\n";
+    cout << "=======================================================================" << endl;
+    cout << "||                                                                   ||" << endl;
+    cout << "||                Press 0 to go back to the menu                     ||" << endl;
+    cout << "||                Press 1 to sent noti to supplier                   ||" << endl;
     cout << "||                                                                   ||" << endl;
     cout << "=======================================================================" << endl;
     cout << "Enter your choice: ";
@@ -1527,6 +1646,38 @@ bool BuyBook(User currentUser)
     return found;
 }
 
+int GetLatestSupplierNotiId()
+{
+    ifstream read;
+    read.open(SUPPLIER_NOTI_FILE);
+    SupplierNotification supNoti;
+    int latestId = 0;
+
+    if (read.peek() == EOF)
+    {
+        return 1;
+    }
+
+    if (read.fail())
+    {
+        cout << RED_COLOR << "Error opening " << SUPPLIER_NOTI_FILE << " file." << WHITE_COLOR << endl;
+        return -1;
+    }
+
+    while (!read.eof())
+    {
+        read >> supNoti.supplierId;
+        read >> supNoti.bookId;
+        read >> supNoti.stockLeft;
+        read.ignore();
+        read.getline(supNoti.bookTitle, 100);
+        latestId = supNoti.id + 1;
+    }
+    read.close();
+
+    return latestId;
+}
+
 int GetLatestBookID()
 {
     ifstream read(BOOK_FILE);
@@ -1537,6 +1688,11 @@ int GetLatestBookID()
     {
         cout << RED_COLOR << "Error opening " << BOOK_FILE << " file." << WHITE_COLOR << endl;
         return -1;
+    }
+
+    if (read.peek() == EOF)
+    {
+        return 1;
     }
 
     while (!read.eof())
@@ -1565,7 +1721,12 @@ int GetLatestUserID()
     if (read.fail())
     {
         cout << RED_COLOR << "Error opening " << USER_FILE << " file." << WHITE_COLOR << endl;
-        return 0;
+        return -1;
+    }
+
+    if (read.peek() == EOF)
+    {
+        return 1;
     }
 
     while (!read.eof())
@@ -1592,6 +1753,11 @@ int GetLatestTransactionID()
     {
         cout << RED_COLOR << "Error opening " << TRANSACTION_FILE << "." << WHITE_COLOR << endl;
         return -1;
+    }
+
+    if (read.peek() == EOF)
+    {
+        return 1;
     }
 
     while (!read.eof())
@@ -2053,4 +2219,140 @@ void DisplayTransactions()
     cout << "----------------------------------------------------------------------------------------------------" << endl
          << endl
          << endl;
+}
+
+int GetSupplierNotificationsById(SupplierNotification notis[], int supplierId)
+{
+    ifstream read(SUPPLIER_NOTI_FILE);
+    int count = 0;
+
+    if (read.fail())
+    {
+        cout << "Error opening " << SUPPLIER_NOTI_FILE << endl;
+        return 0;
+    }
+
+    while (!read.eof())
+    {
+        SupplierNotification temp;
+        read >> temp.id;
+        read.ignore();
+        read >> temp.supplierId;
+        read.ignore();
+        read >> temp.bookId;
+        read.ignore();
+        read >> temp.stockLeft;
+        read.ignore();
+        read.getline(temp.bookTitle, 100);
+
+        if (read.fail())
+            break;
+
+        if (temp.supplierId == supplierId)
+        {
+            notis[count++] = temp;
+        }
+    }
+
+    read.close();
+    return count;
+}
+
+void DisplaySupplierNotifications(int supplierId)
+{
+    SupplierNotification notis[MAX_ARRAY_SIZE];
+    int count = GetSupplierNotificationsById(notis, supplierId);
+
+    if (count == 0)
+    {
+        cout << "No notifications found for supplier ID: " << supplierId << endl;
+        return;
+    }
+
+    DisplayLoading();
+
+    cout << "=============== SUPPLIER NOTIFICATIONS ===============" << endl;
+    cout << "------------------------------------------------------" << endl;
+    cout
+        << setw(6) << "ID"
+        << setw(12) << "Book ID"
+        << setw(20) << "Book Title"
+        << setw(15) << "Stock Left"
+        << endl;
+    cout << "------------------------------------------------------" << endl;
+
+    for (int i = 0; i < count; i++)
+    {
+        cout
+            << setw(6) << notis[i].id
+            << setw(12) << notis[i].bookId
+            << setw(20) << notis[i].bookTitle
+            << setw(15) << notis[i].stockLeft
+            << endl;
+    }
+
+    cout << "------------------------------------------------------" << endl
+         << endl;
+
+    cout << YELLOW_COLOR << "Admin has requested to re-stock these book which are low or out of stock." << WHITE_COLOR << endl;
+}
+
+void NotifySuppliersForLowStock()
+{
+    Book books[MAX_ARRAY_SIZE];
+
+    SupplierNotification notifications[MAX_ARRAY_SIZE];
+    int bookCount = 0, notiId = 0;
+
+    bookCount = ReadBooksData(books, bookCount);
+
+    notiId = GetLatestSupplierNotiId();
+
+    ifstream read;
+    read.open(SUPPLIER_NOTI_FILE);
+
+    ofstream write;
+    write.open(SUPPLIER_NOTI_FILE, ios::app);
+
+    cout << "NOTIID___" << notiId;
+
+    for (int i = 0; i < bookCount; i++)
+    {
+        int leftQty = books[i].stockQuantity - books[i].quantitySold;
+
+        if (leftQty <= 5)
+        {
+
+            for (int j = 0; j < bookCount; j++)
+            {
+
+                SupplierNotification noti;
+                noti.id = notiId++;
+                noti.supplierId = books[i].supplierId;
+                noti.bookId = books[i].id;
+                noti.stockLeft = leftQty;
+                strcpy(noti.bookTitle, books[i].title);
+
+                bool isFileEmpty = read.peek() == EOF;
+
+                if (!isFileEmpty)
+                {
+                    write << "\n";
+                }
+
+                write << noti.id << "\n"
+                      << noti.supplierId << "\n"
+                      << noti.bookId << "\n"
+                      << noti.stockLeft << "\n"
+                      << noti.bookTitle;
+
+                break;
+            }
+        }
+    }
+
+    write.close();
+    cout << "Sending noti to suppliers...." << endl;
+    sleep(1);
+    cout << GREEN_COLOR << "Low stock/out of stock notifications sent to suppliers." << WHITE_COLOR << endl;
 }
