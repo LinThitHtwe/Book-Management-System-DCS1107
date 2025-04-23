@@ -140,13 +140,13 @@ main()
 
                     cin.getline(email, 50);
 
-                    cout << "Enter your password :";
+                    cout << "Enter your password : ";
                     cin.getline(password, 50);
 
                     isLogin = Login(email, password, currentUser);
                     if (!isLogin)
                     {
-                        cout << "Invalid Email or Password. Try Again" << endl;
+                        cout << RED_COLOR << "Invalid Email or Password. Try Again" << WHITE_COLOR << endl;
                     }
                     else
                     {
@@ -261,7 +261,7 @@ main()
                 DisplayAdminMenu();
                 do
                 {
-                    cout << "Please enter your choice (0-11): ";
+                    cout << "Please enter your choice (0-11) : ";
                     cin >> choice;
 
                     if (choice < 0 || choice > 11)
@@ -387,7 +387,7 @@ main()
                     } while (choice != 1 && choice != 0);
                     system("cls");
                 }
-                // Notifications
+                // Display Notifications
                 else if (choice == 5)
                 {
                     system("cls");
@@ -421,6 +421,7 @@ main()
                     } while (choice != 0);
                     system("cls");
                 }
+                // Display Transactions
                 else if (choice == 7)
                 {
                     system("cls");
@@ -437,6 +438,7 @@ main()
                     } while (choice != 0);
                     system("cls");
                 }
+                // Add Admin
                 else if (choice == 8)
                 {
                     system("cls");
@@ -500,6 +502,7 @@ main()
                     break;
                 }
             }
+            // If the user role is user
             else if (strcmp(currentUser.role, USER_ROLE) == 0)
             {
                 DisplayUserMenu();
@@ -515,7 +518,7 @@ main()
                     }
                 } while (choice != 0 && choice != 1 && choice != 2);
 
-                // Buy Book
+                // Buy Book (Display Book List)
                 if (choice == 0)
                 {
                     bool isBookBought = false;
@@ -536,6 +539,7 @@ main()
                     cout << endl
                          << endl;
 
+                    // Buy Book
                     if (choice == 1)
                     {
                         do
@@ -554,8 +558,8 @@ main()
                                 cout << RED_COLOR << "Invalid choice. Please try again." << WHITE_COLOR << endl;
                             }
                         } while (choice != 0);
-                        system("cls");
                     }
+                    system("cls");
                 }
                 // Reset Password
                 else if (choice == 1)
@@ -585,6 +589,7 @@ main()
                     break;
                 }
             }
+            // If the user is a supplier
             else if (strcmp(currentUser.role, SUPPLIER_ROLE) == 0)
             {
                 DisplaySupplierMenu();
@@ -599,6 +604,7 @@ main()
                     }
                 } while (choice != 0 && choice != 1 && choice != 2);
 
+                // Display Supplier Notifications
                 if (choice == 0)
                 {
                     system("cls");
@@ -1318,6 +1324,31 @@ void DisplayBooksUser()
     }
 
     cout << "--------------------------------------------------------------------------------------------" << endl
+         << endl;
+
+    BubbleSortBooks(books, i);
+
+    cout << "================================= TOP 3 BEST-SELLING BOOKS =================================" << endl;
+    cout
+        << setw(6) << "Id"
+        << setw(25) << "Title"
+        << setw(25) << "Author"
+        << setw(18) << "Price"
+        << endl;
+    cout << "--------------------------------------------------------------------------------------------" << endl;
+
+    for (int j = 0; j < 3; j++)
+    {
+        cout
+            << setw(6) << books[j].id
+            << setw(25) << books[j].title
+            << setw(25) << books[j].author
+            << fixed << setprecision(2)
+            << setw(18) << books[j].price << endl;
+    }
+
+    cout << "============================================================================================" << endl
+         << endl
          << endl;
 }
 
@@ -2313,8 +2344,6 @@ void NotifySuppliersForLowStock()
 
     ofstream write;
     write.open(SUPPLIER_NOTI_FILE, ios::app);
-
-    cout << "NOTIID___" << notiId;
 
     for (int i = 0; i < bookCount; i++)
     {
