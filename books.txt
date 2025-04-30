@@ -1,36 +1,36 @@
 1
 Clean Code
-Robert C. Martin
+Martin
 10
-3
-45.50
+9
+45.5
 9
 2
 Refactor
 Martin Fowler
 8
 5
-50.00
+50
 10
 3
 Algorithms
 Sedgewick
 15
 10
-60.00
+60
 11
 4
 Design
 Erich Gamma
 5
 5
-55.00
+55
 9
 5
 Patterns
 GoF
 12
-2
+6
 35.75
 10
 6

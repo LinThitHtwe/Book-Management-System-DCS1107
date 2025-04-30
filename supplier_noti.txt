@@ -1,16 +1,24 @@
 1
+9
+1
+4
+Clean Code
+2
 10
 2
 3
-Refactor2
+Refactor
+3
 11
 3
 5
-Algorithms3
+Algorithms
+4
 9
 4
 0
-Design4
+Design
+5
 11
 6
 5

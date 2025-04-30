@@ -37,7 +37,7 @@ struct User
 struct Transaction
 {
     int id, userId, bookId, quantity;
-    char email[100], bookTitle[100];
+    char email[50], bookTitle[50];
     double bookPrice;
 };
 
@@ -497,6 +497,7 @@ main()
                 else if (choice == 11)
                 {
                     isLogin = false;
+                    isSignUp = false;
                     DisplayLoading();
                     DisplayLogoutSuccessfulBanner();
                     sleep(1);
@@ -584,6 +585,7 @@ main()
                 else if (choice == 2)
                 {
                     isLogin = false;
+                    isSignUp = false;
                     DisplayLoading();
                     DisplayLogoutSuccessfulBanner();
                     sleep(1);
@@ -646,6 +648,7 @@ main()
                 else if (choice == 2)
                 {
                     isLogin = false;
+                    isSignUp = false;
                     DisplayLoading();
                     DisplayLogoutSuccessfulBanner();
                     sleep(1);
@@ -1607,7 +1610,12 @@ bool BuyBook(User currentUser)
                 {
                     cout << RED_COLOR << "Invalid Quantity. Try again." << WHITE_COLOR << endl;
                 }
-            } while (quantity < 1 || quantity > stockLeft);
+                else if (quantity > 10)
+                {
+                    cout << RED_COLOR << "You can only buy a maximum of 10 books at a time." << WHITE_COLOR << endl;
+                }
+
+            } while (quantity < 1 || quantity > stockLeft || quantity > 10);
 
             ofstream writeTrans;
             writeTrans.open(TRANSACTION_FILE, ios::app);

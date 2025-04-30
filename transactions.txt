@@ -33,3 +33,24 @@ Design
 john@example.com
 Patterns
 35.75
+6
+2
+1
+2
+john@gmail.com
+Clean Code
+45.5
+7
+2
+5
+4
+john@gmail.com
+Patterns
+35.75
+8
+2
+1
+1
+john@gmail.com
+Clean Code
+45.5
